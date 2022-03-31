@@ -67,6 +67,10 @@ appropriate setting for your platform (examples: K8s, PBS)
 You can see the available endpoints by starting with the root endpoint and inspecting the links returned:
 
     curl http://127.0.0.1:5000/
+    
+To try out the WPS-T operations you can download the collection: https://www.getpostman.com/collections/0686347f4f69157f07e3
+
+You can import this collection into Postman and run.
 
 # Notes
 This is an implementation of the OGC ADES/WPS-T specification:
