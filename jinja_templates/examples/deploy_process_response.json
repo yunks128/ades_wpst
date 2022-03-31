@@ -1,0 +1,15 @@
+{
+  "processSummary": {
+    "id": "MultiSensorNDVI",
+    "title": "Multi Sensor NDVI",
+    "abstract": "NDVI is calculated after the two bands values Near Infrared and red. It is calculated by this formula : NDVI = (NIR-Red)/(NIR+Red)",
+    "keywords": [
+      "NDVI"
+    ],
+    "version": "1.0.0",
+    "jobControlOptions": [
+      "async-execute"
+    ],
+    "processDescriptionURL": "http://some.domain/wps/processes/MultiSensorNDVI"
+  }
+}

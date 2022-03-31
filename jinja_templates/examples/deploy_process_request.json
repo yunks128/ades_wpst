@@ -1,0 +1,69 @@
+{
+    "processDescription": {
+        "process": {
+            "id": "NDVIMultiSensor",
+            "title": "NDVIMultiSensor",
+            "owsContext": {
+                "offering": {
+                    "code": "http://www.opengis.net/eoc/applicationContext/cwl",
+                    "content": {
+                        "href": "https://some-host/CWL/NDVIMultiSensor.cwl"
+                    }
+                }
+            },
+            "abstract": "Normalized Difference Vegetation Index (NDVI) from an input list of satellite images.",
+            "keywords": ["NDVI"],
+            "inputs": [
+                {
+                    "id": "files",
+                    "title": "Input Image",
+                    "formats": [
+                        {
+                            "mimeType": "application/zip",
+                            "default": true
+                        },{
+                            "mimeType": "application/x-hdf"
+                        }
+                    ],
+                    "minOccurs": "1",
+                    "maxOccurs": "unbounded",
+                    "additionalParameters": [
+                        {
+                            "role": "http://www.opengis.net/eoc/applicationContext/inputMetadata",
+                            "parameters": [
+                                {
+                                    "name": "EOImage",
+                                    "values": ["true"]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "outputs": [
+                {
+                    "id": "output",
+                    "title": "NDVI Images",
+                    "formats": [
+                        {
+                            "mimeType": "image/tiff",
+                            "default": true
+                        }
+                    ]
+                }
+            ]
+        },
+        "processVersion": "1.0.0",
+        "jobControlOptions": [
+            "async-execute"
+        ],
+        "outputTransmission": [
+            "reference"
+        ]
+    },
+    "immediateDeployment": true,
+    "executionUnit": [{
+            "href": "docker.registry/ndvims:latest"
+        }],
+    "deploymentProfileName": "http://www.opengis.net/profiles/eoc/dockerizedApplication"
+}

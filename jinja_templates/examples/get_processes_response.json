@@ -1,0 +1,19 @@
+{
+  "processes": [
+    {
+      "id": "NDVIMultiSensor",
+      "title": "NDVIMultiSensor",
+      "jobControlOptions": [
+        "async-execute"
+      ],
+      "outputTransmission": [
+        "reference"
+      ],
+      "processDescriptionURL": "http://185.52.193.7/wps-proxy/processes/GeomatysNDVIMultiSensor"
+    },
+    {
+      "id": "NDVIStacker",
+[...]
+    }
+  ]
+}
