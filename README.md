@@ -20,7 +20,7 @@ The `Flask` python module is required for installation.
 Be sure to follow the steps in the "Get started" section above first.
 Run the Flask app server with:
 
-    python -m ades_wpst.flask_wpst
+    python -m flask_ades_wpst.flask_wpst
 
 
 # Build the container locally
