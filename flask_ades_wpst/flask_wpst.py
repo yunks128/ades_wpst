@@ -1,6 +1,5 @@
 import argparse
-from flask import Flask, request, Response
-import json
+from flask import Flask, request, render_template
 import os
 from flask_ades_wpst.ades_base import ADES_Base
 
@@ -16,28 +15,34 @@ def parse_args():
 app = Flask(__name__)
 
 
-@app.route("/", methods = ['GET'])
+@app.route('/api/docs')
+def get_docs():
+    print('sending docs')
+    return render_template('swaggerui.html')
+
+
+@app.route("/")
 def root():
-    resp_dict = {"landingPage": {"links": [
-        {"href": "/", "type": "GET", "title": "getLandingPage"},
-        {"href": "/processes", "type": "GET", "title": "getProcesses"},
-        {"href": "/processes", "type": "POST", "title": "deployProcess"},
-        {"href": "/processes/<procID>", "type": "GET",
-         "title": "getProcessDescription"},
-        {"href": "/processes/<procID>", "type": "DELETE",
-         "title": "undeployProcess"},
-        {"href": "/processes/<procID>/jobs", "type": "GET",
-         "title": "getJobList"},
-        {"href": "/processes/<procID>/jobs", "type": "POST",
-         "title": "execute"},
-        {"href": "/processes/<procID>/jobs/<jobID>", "type": "GET",
-         "title": "getStatus"},
-        {"href": "/processes/<procID>/jobs/<jobID>", "type": "DELETE",
-         "title": "dismiss"},
-        {"href": "/processes/<procID>/jobs/<jobID>/result", "type": "GET",
-         "title": "getResult"}]}}
-    status_code = 200
-    return resp_dict, status_code, {'ContentType':'application/json'}
+    print('sending root')
+    # resp_dict = {"landingPage": {"links": [
+    #     {"href": "/", "type": "GET", "title": "getLandingPage"},
+    #     {"href": "/processes", "type": "GET", "title": "getProcesses"},
+    #     {"href": "/processes", "type": "POST", "title": "deployProcess"},
+    #     {"href": "/processes/<procID>", "type": "GET",
+    #      "title": "getProcessDescription"},
+    #     {"href": "/processes/<procID>", "type": "DELETE",
+    #      "title": "undeployProcess"},
+    #     {"href": "/processes/<procID>/jobs", "type": "GET",
+    #      "title": "getJobList"},
+    #     {"href": "/processes/<procID>/jobs", "type": "POST",
+    #      "title": "execute"},
+    #     {"href": "/processes/<procID>/jobs/<jobID>", "type": "GET",
+    #      "title": "getStatus"},
+    #     {"href": "/processes/<procID>/jobs/<jobID>", "type": "DELETE",
+    #      "title": "dismiss"},
+    #     {"href": "/processes/<procID>/jobs/<jobID>/result", "type": "GET",
+    #      "title": "getResult"}]}}
+    return render_template('index.html')
 
 
 @app.route("/processes", methods = ['GET', 'POST'])
