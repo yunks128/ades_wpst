@@ -1,0 +1,25 @@
+{
+  "statusInfo": {
+    "backend_info": {},
+    "inputs": {
+      "inputs": [
+        {
+          "data": "EOP:IPT:Sentinel2",
+          "id": "file"
+        }
+      ],
+      "mode": "async",
+      "outputs": [
+        {
+          "id": "output",
+          "transmissionMode": "reference"
+        }
+      ],
+      "response": "document"
+    },
+    "jobID": "NDVIMultiSensor2-143ed126c4cfdb68fe012938802285da12f6efd3",
+    "procID": "NDVIMultiSensor2",
+    "status": "dismissed",
+    "timestamp": "2022-04-16T07:57:57Z"
+  }
+}

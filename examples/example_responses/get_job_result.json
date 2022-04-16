@@ -1,0 +1,9 @@
+{
+  "outputs": [
+    {
+      "href": "http://some-host/WPS/sample-ouput",
+      "id": "output",
+      "mimeType": "image/tiff"
+    }
+  ]
+}

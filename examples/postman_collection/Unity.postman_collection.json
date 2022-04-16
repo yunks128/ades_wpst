@@ -1,0 +1,262 @@
+{
+	"info": {
+		"_postman_id": "392af765-0849-4cdb-ac59-d4fd560722f2",
+		"name": "Unity",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Private",
+			"item": [
+				{
+					"name": "Deploy Process",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n   \"processDescription\":{\n      \"process\":{\n         \"id\":\"NDVIMultiSensor\",\n         \"title\":\"NDVIMultiSensor\",\n         \"owsContext\":{\n            \"offering\":{\n               \"code\":\"http://www.opengis.net/eoc/applicationContext/cwl\",\n               \"content\":{\n                  \"href\":\"https://some-host/CWL/NDVIMultiSensor.cwl\"\n               }\n            }\n         },\n         \"abstract\":\"Normalized Difference Vegetation Index (NDVI) from an input list of satellite images.\",\n         \"keywords\":[\n            \"NDVI\"\n         ],\n         \"inputs\":[\n            {\n               \"id\":\"files\",\n               \"title\":\"Input Image\",\n               \"formats\":[\n                  {\n                     \"mimeType\":\"application/zip\",\n                     \"default\":true\n                  },\n                  {\n                     \"mimeType\":\"application/x-hdf\"\n                  }\n               ],\n               \"minOccurs\":\"1\",\n               \"maxOccurs\":\"unbounded\",\n               \"additionalParameters\":[\n                  {\n                     \"role\":\"http://www.opengis.net/eoc/applicationContext/inputMetadata\",\n                     \"parameters\":[\n                        {\n                           \"name\":\"EOImage\",\n                           \"values\":[\n                              \"true\"\n                           ]\n                        }\n                     ]\n                  }\n               ]\n            }\n         ],\n         \"outputs\":[\n            {\n               \"id\":\"output\",\n               \"title\":\"NDVI Images\",\n               \"formats\":[\n                  {\n                     \"mimeType\":\"image/tiff\",\n                     \"default\":true\n                  }\n               ]\n            }\n         ]\n      },\n      \"processVersion\":\"1.0.0\",\n      \"jobControlOptions\":[\n         \"async-execute\"\n      ],\n      \"outputTransmission\":[\n         \"reference\"\n      ]\n   },\n   \"immediateDeployment\":true,\n   \"executionUnit\":[\n      {\n         \"href\":\"docker.registry/ndvims:latest\"\n      }\n   ],\n   \"deploymentProfileName\":\"http://www.opengis.net/profiles/eoc/dockerizedApplication\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:5000/processes",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "5000",
+							"path": [
+								"processes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Processes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:5000/processes",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "5000",
+							"path": [
+								"processes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Describe Process",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:5000/processes/NDVIMultiSensor",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "5000",
+							"path": [
+								"processes",
+								"NDVIMultiSensor"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Undeploy Process",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:5000/processes/NDVIMultiSensor",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "5000",
+							"path": [
+								"processes",
+								"NDVIMultiSensor"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Execute Process",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"mode\": \"async\",\n  \"response\": \"document\",\n  \"inputs\": [\n    {\n      \"id\": \"file\",\n      \"data\": \"EOP:IPT:Sentinel2\"\n    }\n  ],\n  \"outputs\": [\n    {\n      \"id\": \"output\",\n      \"transmissionMode\": \"reference\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:5000/processes/NDVIMultiSensor2/jobs",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "5000",
+							"path": [
+								"processes",
+								"NDVIMultiSensor2",
+								"jobs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Job Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:5000/processes/NDVIMultiSensor2/jobs/NDVIMultiSensor2-143ed126c4cfdb68fe012938802285da12f6efd3",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "5000",
+							"path": [
+								"processes",
+								"NDVIMultiSensor2",
+								"jobs",
+								"NDVIMultiSensor2-143ed126c4cfdb68fe012938802285da12f6efd3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Jobs by process",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:5000/processes/NDVIMultiSensor2/jobs",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "5000",
+							"path": [
+								"processes",
+								"NDVIMultiSensor2",
+								"jobs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Job Result",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:5000/processes/NDVIMultiSensor2/jobs/NDVIMultiSensor2-190be7bd468593692a43f4c443606c7c8be9d839/result",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "5000",
+							"path": [
+								"processes",
+								"NDVIMultiSensor2",
+								"jobs",
+								"NDVIMultiSensor2-190be7bd468593692a43f4c443606c7c8be9d839",
+								"result"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Dismiss Job",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:5000/processes/NDVIMultiSensor2/jobs/NDVIMultiSensor2-143ed126c4cfdb68fe012938802285da12f6efd3",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "5000",
+							"path": [
+								"processes",
+								"NDVIMultiSensor2",
+								"jobs",
+								"NDVIMultiSensor2-143ed126c4cfdb68fe012938802285da12f6efd3"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"protocolProfileBehavior": {}
+}

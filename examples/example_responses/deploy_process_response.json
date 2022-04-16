@@ -1,0 +1,17 @@
+{
+  "deploymentResult": {
+    "processSummary": {
+      "abstract": "Normalized Difference Vegetation Index (NDVI) from an input list of satellite images.",
+      "id": "NDVIMultiSensor2",
+      "jobControlOptions": [
+        "async-execute"
+      ],
+      "keywords": [
+        "NDVI"
+      ],
+      "processDescriptionURL": "http://127.0.0.1:5000/processes/NDVIMultiSensor2",
+      "title": "NDVIMultiSensor2",
+      "version": "1.0.0"
+    }
+  }
+}

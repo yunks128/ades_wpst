@@ -68,15 +68,23 @@ You can see the available endpoints by starting with the root endpoint and inspe
 
     curl http://127.0.0.1:5000/
     
-To try out the WPS-T operations you can download the collection: https://www.getpostman.com/collections/0686347f4f69157f07e3
+## Using Swagger UI
+http://127.0.0.1:5000/api/docs
+![Screenshot](screenshot.png)
 
-You can import this collection into Postman and run.
+You can find the example requests and sample responses for each WPS-T operation in the `examples` directory. 
+
+## Run on Postman
+To try out the WPS-T operations using Postman as a client,
+
+You can import the collection under `examples/postman_collection` into the tool and run the requests.
+ 
+Or you can download the collection: https://www.getpostman.com/collections/0686347f4f69157f07e3
+
+To download Postman: postman.com/downloads/
 
 # Notes
 This is an implementation of the OGC ADES/WPS-T specification:
 http://docs.opengeospatial.org/per/18-050r1.html#_wps_t_restjson
 
-Currently looking for example responses of the following endpoints:
-
-    /processes
 

@@ -1,0 +1,28 @@
+{
+  "jobs": [
+    {
+      "backend_info": "{}",
+      "inputs": "{\"mode\": \"async\", \"response\": \"document\", \"inputs\": [{\"id\": \"file\", \"data\": \"EOP:IPT:Sentinel2\"}], \"outputs\": [{\"id\": \"output\", \"transmissionMode\": \"reference\"}]}",
+      "jobID": "NDVIMultiSensor2-de2199bb3c44711f76acd40bfb23ae3e62db1b61",
+      "procID": "NDVIMultiSensor2",
+      "status": "accepted",
+      "timestamp": "2022-03-30T09:54:04Z"
+    },
+    {
+      "backend_info": "{}",
+      "inputs": "{\"mode\": \"async\", \"response\": \"document\", \"inputs\": [{\"id\": \"file\", \"data\": \"EOP:IPT:Sentinel2\"}], \"outputs\": [{\"id\": \"output\", \"transmissionMode\": \"reference\"}]}",
+      "jobID": "NDVIMultiSensor2-143ed126c4cfdb68fe012938802285da12f6efd3",
+      "procID": "NDVIMultiSensor2",
+      "status": "dismissed",
+      "timestamp": "2022-04-16T07:57:57Z"
+    },
+    {
+      "backend_info": "{}",
+      "inputs": "{\"mode\": \"async\", \"response\": \"document\", \"inputs\": [{\"id\": \"file\", \"data\": \"EOP:IPT:Sentinel2\"}], \"outputs\": [{\"id\": \"output\", \"transmissionMode\": \"reference\"}]}",
+      "jobID": "NDVIMultiSensor2-268fcc2eb1108f7e58e52ff1c7b94573bde40210",
+      "procID": "NDVIMultiSensor2",
+      "status": "accepted",
+      "timestamp": "2022-04-16T07:53:43Z"
+    }
+  ]
+}

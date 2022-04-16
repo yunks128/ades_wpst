@@ -1,0 +1,18 @@
+{
+  "undeploymentResult": {
+    "abstract": "Normalized Difference Vegetation Index (NDVI) from an input list of satellite images.",
+    "executionUnit": "docker.registry/ndvims:latest",
+    "id": "NDVIMultiSensor3",
+    "immediateDeployment": "true",
+    "jobControlOptions": [
+      "async-execute"
+    ],
+    "keywords": "NDVI",
+    "outputTransmission": [
+      "reference"
+    ],
+    "owsContextURL": "https://some-host/CWL/NDVIMultiSensor.cwl",
+    "processVersion": "1.0.0",
+    "title": "NDVIMultiSensor"
+  }
+}
