@@ -69,7 +69,7 @@ You can see the available endpoints by starting with the root endpoint and inspe
     curl http://127.0.0.1:5000/
     
 ## Using Swagger UI
-http://127.0.0.1:5000/api/docs
+http://127.0.0.1:5000/api/docs#/
 ![Screenshot](screenshot.png)
 
 You can find the example requests and sample responses for each WPS-T operation in the `examples` directory. 
