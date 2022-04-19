@@ -35,7 +35,7 @@ For active development purposes (not releases), if you want to build container a
 
 Run the following commands in order, every time:
 
-    export DOCKER_TAG=$(date +"%d-%m-%yT%H:%M:%S")
+    export DOCKER_TAG=$(date +"%d-%m-%yT%H.%M.%S")
     docker build -t unity/ades-wpst-api:$DOCKER_TAG -f docker/Dockerfile .
     docker run -it -p 5000:5000 -v ${PWD}/sqlite:/flask_ades_wpst/sqlite unity/ades-wpst-api:$DOCKER_TAG
 
