@@ -1,90 +1,132 @@
-# Description
-Stub flask app that implements a subset of the OGC ADES/WPST specification.
+<!-- Header block for project -->
+<hr>
 
-# Get started
-Clone the repo and create a subdirectory for the SQLite database file.
+<div align="center">
 
-    git clone https://github.com/unity-sds/ades_wpst.git
-    cd ades_wpst
-    mkdir sqlite #to setup the local db
+![logo](https://user-images.githubusercontent.com/3129134/163255685-857aa780-880f-4c09-b08c-4b53bf4af54d.png)
 
-# Install it natively (not in a container) as a python module
-Be sure to follow the steps in the "Get started" section above first.  Install
-natively as a python module with:
+<h1 align="center">[INSERT YOUR REPO / PROJ NAME HERE]</h1>
+<!-- ☝️ Replace with your repo name ☝️ -->
 
-    python setup.py install
+</div>
 
-The `Flask` python module is required for installation.
+<pre align="center">[INSERT A SINGLE SENTENCE DESCRIBING THE PURPOSE OF YOUR REPO / PROJ]</pre>
+<!-- ☝️ Replace with a single sentence describing the purpose of your repo / proj ☝️ -->
 
-# Run it natively (not in a container)
-Be sure to follow the steps in the "Get started" section above first.
-Run the Flask app server with:
+<!-- Header block for project -->
 
-    python -m flask_ades_wpst.flask_wpst
+[INSERT YOUR BADGES HERE (SEE: https://shields.io)] [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
+<!-- ☝️ Add badges via: https://shields.io e.g. ![](https://img.shields.io/github/your_chosen_action/your_org/your_repo) ☝️ -->
 
+[INSERT SCREENSHOT OF YOUR SOFTWARE, IF APPLICABLE]
+<!-- ☝️ Screenshot of your software (if applicable) via ![](https://uri-to-your-screenshot) ☝️ -->
 
-# Build the container locally
-Be sure to follow the steps in the "Get started" section above first.
-If you run the Docker container as shown above, you will automatically download
-the latest container version from Docker Hub.  If you like, you can also build
-your own local container as follows:
+[INSERT MORE DETAILED DESCRIPTION OF YOUR REPOSITORY HERE]
+<!-- ☝️ Replace with a more detailed description of your repository, including why it was made and whom its intended for.  ☝️ -->
 
-    docker build -t unity/ades-wpst-api:<tag> -f docker/Dockerfile .
+[INSERT LIST OF IMPORTANT PROJECT / REPO LINKS HERE]
+<!-- example links>
+[Website](INSERT WEBSITE LINK HERE) | [Docs/Wiki](INSERT DOCS/WIKI SITE LINK HERE) | [Discussion Board](INSERT DISCUSSION BOARD LINK HERE) | [Issue Tracker](INSERT ISSUE TRACKER LINK HERE)
+-->
+
+## Features
+
+* [INSERT LIST OF FEATURES IMPORTANT TO YOUR USERS HERE]
+  
+<!-- ☝️ Replace with a bullet-point list of your features ☝️ -->
+
+## Contents
+
+* [Quick Start](#quick-start)
+* [Changelog](#changelog)
+* [FAQ](#frequently-asked-questions-faq)
+* [Contributing Guide](#contributing)
+* [License](#license)
+* [Support](#support)
+
+## Quick Start
+
+This guide provides a quick way to get started with our project. Please see our [docs]([INSERT LINK TO DOCS SITE / WIKI HERE]) for a more comprehensive overview.
+
+### Requirements
+
+* [INSERT LIST OF REQUIREMENTS HERE]
+  
+<!-- ☝️ Replace with a numbered list of your requirements, including hardware if applicable ☝️ -->
+
+### Setup Instructions
+
+1. [INSERT STEP-BY-STEP SETUP INSTRUCTIONS HERE, WITH OPTIONAL SCREENSHOTS]
    
-For active development purposes (not releases), if you want to build container as frequent as multiple times a day, you can use the following to version containers by datetime
+<!-- ☝️ Replace with a numbered list of how to set up your software prior to running ☝️ -->
 
-Run the following commands in order, every time:
+### Run Instructions
 
-    export DOCKER_TAG=$(date +"%d-%m-%yT%H.%M.%S")
-    docker build -t unity/ades-wpst-api:$DOCKER_TAG -f docker/Dockerfile .
-    docker run -it -p 5000:5000 -v ${PWD}/sqlite:/flask_ades_wpst/sqlite unity/ades-wpst-api:$DOCKER_TAG
+1. [INSERT STEP-BY-STEP RUN INSTRUCTIONS HERE, WITH OPTIONAL SCREENSHOTS]
 
-# Run it as a Docker container
-Be sure to follow the steps in the "Get started" section above first.
-To run as a Docker container, but sure to do the following in the `docker run`
-command as shown in the example below:
+<!-- ☝️ Replace with a numbered list of your run instructions, including expected results ☝️ -->
 
-1. Map the Flask application server port to the host port (`-p` option)
-1. Mount your `sqlite` subdirectory on the host machine in to the container
-(`-v` option)
-1. Set the `ADES_PLATFORM` environment variable to a supported environment
-(e.g., `K8s`, `PBS`, `Generic`) (`-e` option).  If no environment variable
-is set, the default is `Generic`, which results in no additional actions
-being done on the host.
+### Usage Examples
 
-# Run with Docker: 
-For prototype, don't specify the platform when running the docker container
+* [INSERT LIST OF COMMON USAGE EXAMPLES HERE, WITH OPTIONAL SCREENSHOTS]
 
-    docker run -it -p 5000:5000 -v ${PWD}/sqlite:/ades_wpst/sqlite unity/ades-wpst-api:<tag>
+<!-- ☝️ Replace with a list of your usage examples, including screenshots if possible, and link to external documentation for details ☝️ -->
 
+### Build Instructions (if applicable)
 
-In the following, set the `ADES_PLATFORM` environment variable to the
-appropriate setting for your platform (examples: K8s, PBS)
+1. [INSERT STEP-BY-STEP BUILD INSTRUCTIONS HERE, WITH OPTIONAL SCREENSHOTS]
 
-    docker run -it -p 5000:5000 -v ${PWD}/sqlite:/ades_wpst/sqlite -e "ADES_PLATFORM=<platform>" <org>/ades-wpst-api:<tag>
+<!-- ☝️ Replace with a numbered list of your build instructions, including expected results / outputs with optional screenshots ☝️ -->
 
-# Try out the OGC ADES/WPS-T endpoints
-You can see the available endpoints by starting with the root endpoint and inspecting the links returned:
+### Test Instructions (if applicable)
 
-    curl http://127.0.0.1:5000/
-    
-## Using Swagger UI
-http://127.0.0.1:5000/api/docs#/
-![Screenshot](screenshot.png)
+1. [INSERT STEP-BY-STEP TEST INSTRUCTIONS HERE, WITH OPTIONAL SCREENSHOTS]
 
-You can find the example requests and sample responses for each WPS-T operation in the `examples` directory. 
+<!-- ☝️ Replace with a numbered list of your test instructions, including expected results / outputs with optional screenshots ☝️ -->
 
-## Run on Postman
-To try out the WPS-T operations using Postman as a client,
+## Changelog
 
-You can import the collection under `examples/postman_collection` into the tool and run the requests.
- 
-Or you can download the collection: https://www.getpostman.com/collections/0686347f4f69157f07e3
+See our [CHANGELOG.md](CHANGELOG.md) for a history of our changes.
 
-To download Postman: postman.com/downloads/
+See our [releases page]([INSERT LINK TO YOUR RELEASES PAGE]) for our key versioned releases.
 
-# Notes
-This is an implementation of the OGC ADES/WPS-T specification:
-http://docs.opengeospatial.org/per/18-050r1.html#_wps_t_restjson
+<!-- ☝️ Replace with links to your changelog and releases page ☝️ -->
 
+## Frequently Asked Questions (FAQ)
+
+[INSERT LINK TO FAQ PAGE OR PROVIDE FAQ INLINE HERE]
+<!-- example link to FAQ PAGE>
+Questions about our project? Please see our: [FAQ]([INSERT LINK TO FAQ / DISCUSSION BOARD])
+-->
+
+<!-- example FAQ inline format>
+1. Question 1
+   - Answer to question 1
+2. Question 2
+   - Answer to question 2
+-->
+
+<!-- example FAQ inline with no questions yet>
+No questions yet. Propose a question to be added here by reaching out to our contributors! See support section below.
+-->
+
+<!-- ☝️ Replace with a list of frequently asked questions from your project, or post a link to your FAQ on a discussion board ☝️ -->
+
+## Contributing
+
+Interested in contributing to our project? Please see our: [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## License
+
+See our: [LICENSE](LICENSE)
+
+## Support
+
+[INSERT CONTACT INFORMATION OR PROFILE LINKS TO MAINTAINERS AMONG COMMITTER LIST]
+
+<!-- example list of contacts>
+Key points of contact are: [@github-user-1](link to github profile) [@github-user-2](link to github profile)
+-->
+
+<!-- ☝️ Replace with the key individuals who should be contacted for questions ☝️ -->
 
