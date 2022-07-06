@@ -6,8 +6,15 @@ import os
 from subprocess import run
 import json
 from flask_ades_wpst.ades_abc import ADES_ABC
-# from otello import Mozart
+from otello import Mozart
 
+hysds_to_ogc_status = {
+    "job-started" : "running",
+    "job-queued" : "accepted",
+    "job-failed" : "failed",
+    "job-completed" : "succeeded"
+    
+    }
 
 class ADES_HYSDS(ADES_ABC):
 
@@ -22,7 +29,7 @@ class ADES_HYSDS(ADES_ABC):
         self._lw_version = lw_version
         self._grq_url = grq_url
         self.s3_code_bucket = s3_code_bucket
-        # m = Mozart()
+        m = Mozart()
 
 
     def _generate_job_id_stub(self, qsub_stdout):
@@ -89,40 +96,33 @@ class ADES_HYSDS(ADES_ABC):
     def exec_job(self, job_spec):
         print(job_spec)
         # Make Otello call to submit job with job type and parameters
-        """
-        algo_instance = m.get_job_type(proc_id)
-        algo_instance.initialize() #retrieving the Job wiring and parameters
-        algo_instance.set_input_params(job_spec.get("inputs")
-        hysds_job = algo_instance.submit_job()
-        """
+        proc_id = job_spec.get("proc_id")
+        job = m.get_job_type(proc_id)
+        job.initialize() #retrieving the Job wiring and parameters
+        job.set_input_params(job_spec.get("inputs") #check if this is correct
+        print(job.params)
+        hysds_job = job.submit_job()
 
-        # Stub for prototype
         print("Submitting job of type {}\n Parameters: {}").format(job_spec.get("process"), job_spec.get("inputs"))
+   
+        return {'job_id': hysds_job.job_id, 'status': hysds_job.get_status(), 'error': error}
 
-            
-        return {'job_id': job_id, 'status': status, 'error': error}
-
-    def dismiss_job(self, job_spec):
+    def dismiss_job(self, proc_id, job_id):
         # We can only dismiss jobs that were last in accepted or running state.
-        status = self.get_job(job_spec)["status"]
+        # initialize job
+        job = Otello.Job(job_id=job_id)
+        status = job.get_status()
         print("dismiss_job got start status: ", status)
-        if status in ("running", "accepted"):
-            # Delete the job from the queue if it is still queued or running.
-            # The "-x" option enables deleting jobs and their history in any 
-            # of the following states: running, queued, suspended, held, 
-            # finished, or moved.
-            pbs_job_id = job_spec["backend_info"]["pbs_job_id"]
-            qdel_resp = run([self._pbs_qdel_cmd, "-x", "-W", "force", pbs_job_id],
-                            capture_output=True, text=True)
-            print("Deleting jobID:", job_spec["jobID"])
-            print("Deleting pbs_job_id:", pbs_job_id)
-            print("qdel_resp:", qdel_resp)
-       
-        # Remove the job's work directory.
-        job_id = job_spec["jobID"]
-        self._remove_workdir(job_id)
-            
-        return job_spec
+        if status in ("job-started", "job-queued"):
+            # if status is started then revoke the job
+            if status == "job-started":
+                job.revoke()
+            elif status == "job-queued"
+            # if status is queued then purge (remove) the job
+                job.remove()
+        else:
+            raise Exception(f"Can not dismiss a job in {hysds_to_ogc_status.get(status)}")            
+        return
 
     def get_job(self, job_spec):
         # Get PBS job status.
@@ -138,9 +138,7 @@ class ADES_HYSDS(ADES_ABC):
         
         return job_spec
 
-    def get_job_results(self, job_spec):
-        res =  {"links": [{"href": "https://mypath",
-                           "rel": "result",
-                           "type": "application/json",
-                           "title": "mytitle"}]}
-        return {**job_spec, **res}
+    def get_job_results(self, job_id):
+        job = Otello.Job(job_id=job_id)
+        products = job.get_staged_products()
+        return products

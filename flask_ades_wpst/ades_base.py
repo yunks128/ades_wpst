@@ -114,7 +114,7 @@ class ADES_Base:
             return job_info
 
         # otherwise, query the ADES backend for the current status
-        # ades_resp = self._ades.get_job(job_spec)
+        ades_resp = self._ades.get_job(job_spec)
         # print(ades_resp)
         # job_info["status"] = ades_resp["status"]
         job_info = {"jobID": job_id, "status": job_spec["status"], "message": "Status of job {}".format(job_id)}
@@ -131,14 +131,14 @@ class ADES_Base:
         """
         now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")
         # TODO: this needs to be globally unique despite underlying processing cluster
-        job_id = f"{proc_id}-{hashlib.sha1((json.dumps(job_inputs, sort_keys=True) + now).encode()).hexdigest()}"
+        # job_id = f"{proc_id}-{hashlib.sha1((json.dumps(job_inputs, sort_keys=True) + now).encode()).hexdigest()}"
         job_spec = {
+            "proc_id": proc_id,
             "process": self.get_proc(proc_id),
-            "inputs": job_inputs,
-            "job_id": job_id,
+            "inputs": job_inputs
         }
-        # ades_resp = self._ades.exec_job(job_spec)
-        ades_resp = {} # mock
+        ades_resp = self._ades.exec_job(job_spec)
+        job_id = ades_resp.get("job_id")
         # ades_resp will return platform specific information that should be 
         # kept in the database with the job ID record
         sqlite_exec_job(proc_id, job_id, job_inputs, ades_resp)
@@ -151,8 +151,8 @@ class ADES_Base:
         :param job_id:
         :return:
         """
+        ades_resp = self._ades.dismiss_job(proc_id, job_id)
         job_spec = sqlite_dismiss_job(job_id)
-        # ades_resp = self._ades.dismiss_job(job_spec)
         return job_spec
 
     def get_job_results(self, proc_id, job_id):
@@ -165,6 +165,8 @@ class ADES_Base:
                 "href": "http://some-host/WPS/sample-ouput",
                 "id": "output"
             }
-        outputs.append(output)
+        for product in products:
+            #create output blocks and append
+            outputs.append(output)
         job_result["outputs"] = outputs
         return job_result
