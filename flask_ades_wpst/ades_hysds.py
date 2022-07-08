@@ -6,6 +6,7 @@ import os
 from subprocess import run
 import json
 from flask_ades_wpst.ades_abc import ADES_ABC
+import otello
 from otello import Mozart
 
 hysds_to_ogc_status = {
@@ -139,6 +140,6 @@ class ADES_HYSDS(ADES_ABC):
         return job_spec
 
     def get_job_results(self, job_id):
-        job = Otello.Job(job_id=job_id)
-        products = job.get_staged_products()
+        job = otello.Job(job_id=job_id)
+        products = job.get_generated_products()
         return products

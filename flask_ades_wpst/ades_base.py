@@ -157,16 +157,22 @@ class ADES_Base:
 
     def get_job_results(self, proc_id, job_id):
         # job_spec = self.get_job(proc_id, job_id)
-        # ades_resp = self._ades.get_job_results(job_spec)
+        products = self._ades.get_job_results(job_id=job_id)
         job_result = dict()
         outputs = list()
-        output = {
-                "mimeType": "image/tiff",
-                "href": "http://some-host/WPS/sample-ouput",
-                "id": "output"
-            }
         for product in products:
-            #create output blocks and append
+            id = product.get("id")
+            location = None
+            locations = product.get("browse_urls")
+            for loc in locations:
+                if loc.startswith("s3://"):
+                    location = loc
+            # create output blocks and append
+            output = {
+                "mimeType": "tbd",
+                "href": location,
+                "id": id
+            }
             outputs.append(output)
         job_result["outputs"] = outputs
         return job_result
