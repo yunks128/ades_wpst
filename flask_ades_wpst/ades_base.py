@@ -95,8 +95,11 @@ class ADES_Base:
         return proc_desc
 
     def get_jobs(self, proc_id=None):
-        jobs = sqlite_get_jobs(proc_id)
-        return jobs
+        # Removing sqlite query
+        # jobs = sqlite_get_jobs(proc_id)
+        # Query ADES
+        jobs_list = self._ades.get_jobs(proc_id)
+        return jobs_list
 
     def get_job(self, proc_id, job_id):
         # Required fields in job_info response dict:

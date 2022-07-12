@@ -119,7 +119,7 @@ class ADES_HYSDS(ADES_ABC):
         hysds_job = job.submit_job(queue='factotum-job_worker-large', priority=0, tag="test")
         print(f"Submitted job with id {hysds_job.job_id}")
         error = None
-        time.sleep(5)
+        time.sleep(2)
         return {'job_id': hysds_job.job_id, 'status': hysds_job.get_status(), 'error': error}
 
     def dismiss_job(self, proc_id, job_id):
@@ -139,9 +139,21 @@ class ADES_HYSDS(ADES_ABC):
             raise Exception(f"Can not dismiss a job in {hysds_to_ogc_status.get(status)}.")
         return
 
-
-    def get_jobs(self):
+    def get_jobs(self, proc_id):
+        jobs_result = list()
+        m = otello.Mozart()
         job_set = m.get_jobs()
+        print(f"filtering jobs for process {proc_id}")
+        # {"jobID": job_id, "status": job_info["status"], "message": "Status of job {}".format(job_id)}
+        for job in job_set:
+            job_dets = dict()
+            job_info = job.get_info()
+            if job_info.get("type") == proc_id:
+                job_dets["jobID"] = job_info.get("payload_id")
+                job_dets["status"] = hysds_to_ogc_status.get(job.get_status())
+                job_dets["inputs"] = job_info.get("job").get("params").get("job_specification").get("params")
+                jobs_result.append(job_dets)
+        return jobs_result
 
     def get_job(self, job_spec):
         # Get PBS job status.
