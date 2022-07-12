@@ -1,4 +1,4 @@
-# Description
+:q# Description
 Stub flask app that implements a subset of the OGC ADES/WPST specification.
 
 # Get started
@@ -37,7 +37,7 @@ Run the following commands in order, every time:
 
     export DOCKER_TAG=$(date +"%d-%m-%yT%H.%M.%S")
     docker build -t unity/ades-wpst-api:$DOCKER_TAG -f docker/Dockerfile .
-    docker run -it -p 5000:5000 -v ${PWD}/sqlite:/flask_ades_wpst/sqlite unity/ades-wpst-api:$DOCKER_TAG
+    docker run -it -p 8000:8000 -v ${PWD}/sqlite:/flask_ades_wpst/sqlite unity/ades-wpst-api:$DOCKER_TAG
 
 # Run it as a Docker container
 Be sure to follow the steps in the "Get started" section above first.

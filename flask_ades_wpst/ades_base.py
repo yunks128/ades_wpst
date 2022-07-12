@@ -24,7 +24,7 @@ class ADES_Base:
             from flask_ades_wpst.ades_k8s import ADES_K8s as ADES_Platform
         elif self._platform == "PBS":
             from flask_ades_wpst.ades_pbs import ADES_PBS as ADES_Platform
-        elif self.platform == "HYSDS":
+        elif self._platform == "HYSDS":
             from flask_ades_wpst.ades_hysds import ADES_HYSDS as ADES_Platform
         else:
             # Invalid platform setting.  If you do implement a new
@@ -107,19 +107,21 @@ class ADES_Base:
         #   estimatedCompletion (dateTime)
         #   nextPoll (dateTime)
         #   percentCompleted (int) in range [0, 100]
-        job_spec = sqlite_get_job(job_id)
+        #job_spec = sqlite_get_job(job_id)
         # if job was dismissed, then bypass querying the ADES backend
-        job_info = {"jobID": job_id, "status": job_spec["status"]}
-        if job_spec["status"] == "dismissed":
-            return job_info
-
+        # job_info = {"jobID": job_id, "status": job_spec["status"]}
+        # if job_spec["status"] == "dismissed":
+        #     return job_info
         # otherwise, query the ADES backend for the current status
+        job_spec = dict()
+        job_spec["jobID"] = job_id
         ades_resp = self._ades.get_job(job_spec)
-        # print(ades_resp)
-        # job_info["status"] = ades_resp["status"]
-        job_info = {"jobID": job_id, "status": job_spec["status"], "message": "Status of job {}".format(job_id)}
+        print(ades_resp)
+        job_info = dict()
+        job_info["status"] = ades_resp["status"]
+        job_info = {"jobID": job_id, "status": job_info["status"], "message": "Status of job {}".format(job_id)}
         # and update the db with that status
-        # sqlite_update_job_status(job_id, job_info["status"])
+        #(job_id, job_info["status"])
         return job_info
 
     def exec_job(self, proc_id, job_inputs):
@@ -134,14 +136,15 @@ class ADES_Base:
         # job_id = f"{proc_id}-{hashlib.sha1((json.dumps(job_inputs, sort_keys=True) + now).encode()).hexdigest()}"
         job_spec = {
             "proc_id": proc_id,
-            "process": self.get_proc(proc_id),
+            #"process": self.get_proc(proc_id),
             "inputs": job_inputs
         }
         ades_resp = self._ades.exec_job(job_spec)
         job_id = ades_resp.get("job_id")
         # ades_resp will return platform specific information that should be 
         # kept in the database with the job ID record
-        sqlite_exec_job(proc_id, job_id, job_inputs, ades_resp)
+        #sqlite_exec_job(proc_id, job_id, job_inputs, ades_resp)
+        self._ades.exec_job(job_spec)
         return {"code": 201, "location": "{}/processes/{}/jobs/{}".format(self.host, proc_id, job_id)}
             
     def dismiss_job(self, proc_id, job_id):

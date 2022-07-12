@@ -8,6 +8,7 @@ import json
 from flask_ades_wpst.ades_abc import ADES_ABC
 import otello
 from otello import Mozart
+import time
 
 hysds_to_ogc_status = {
     "job-started" : "running",
@@ -76,7 +77,12 @@ class ADES_HYSDS(ADES_ABC):
         for proc_name in job_types:
         """
         # For prototype,
-
+        m = Mozart()
+        job_types = m.get_job_types()
+        for proc_name in job_types:
+            jt = m.get_job_type(proc_name)
+            jt.initialize()
+            jt.describe()
 
     def deploy_proc(self, proc_spec):
         container = proc_spec["executionUnit"][0]["href"]
@@ -97,49 +103,58 @@ class ADES_HYSDS(ADES_ABC):
     def exec_job(self, job_spec):
         print(job_spec)
         # Make Otello call to submit job with job type and parameters
+        m = otello.Mozart()
         proc_id = job_spec.get("proc_id")
+        print(proc_id)
+        print(job_spec.get("inputs").get("inputs"))
         job = m.get_job_type(proc_id)
-        job.initialize() #retrieving the Job wiring and parameters
-        job.set_input_params(job_spec.get("inputs") #check if this is correct
-        print(job.params)
-        hysds_job = job.submit_job()
-
-        print("Submitting job of type {}\n Parameters: {}").format(job_spec.get("process"), job_spec.get("inputs"))
-   
+        job.initialize() # retrieving the Job wiring and parameters
+        # Create params dictionary
+        params = dict()
+        if len(job_spec.get("inputs").get("inputs")) != 0:
+            for input in job_spec.get("inputs").get("inputs"):
+                params[input["id"]] = input["data"]
+        job.set_input_params(params=params)
+        print("Submitting job of type {}\n Parameters: {}".format(proc_id, params))
+        hysds_job = job.submit_job(queue='factotum-job_worker-large', priority=0, tag="test")
+        print(f"Submitted job with id {hysds_job.job_id}")
+        error = None
+        time.sleep(5)
         return {'job_id': hysds_job.job_id, 'status': hysds_job.get_status(), 'error': error}
 
     def dismiss_job(self, proc_id, job_id):
         # We can only dismiss jobs that were last in accepted or running state.
         # initialize job
-        job = Otello.Job(job_id=job_id)
+        job = otello.Job(job_id=job_id)
         status = job.get_status()
         print("dismiss_job got start status: ", status)
         if status in ("job-started", "job-queued"):
             # if status is started then revoke the job
             if status == "job-started":
                 job.revoke()
-            elif status == "job-queued"
-            # if status is queued then purge (remove) the job
+            elif status == "job-queued":
+                # if status is queued then purge (remove) the job
                 job.remove()
         else:
-            raise Exception(f"Can not dismiss a job in {hysds_to_ogc_status.get(status)}")            
+            raise Exception(f"Can not dismiss a job in {hysds_to_ogc_status.get(status)}.")
         return
+
+
+    def get_jobs(self):
+        job_set = m.get_jobs()
 
     def get_job(self, job_spec):
         # Get PBS job status.
         # 
         job_id = job_spec["jobID"]
-        work_dir = self._construct_workdir(job_id)
-        pbs_job_id = job_spec["backend_info"]["pbs_job_id"]
-        qstat_resp = run([self._pbs_qstat_cmd, "-x", "-F", "json", pbs_job_id],
-                         capture_output=True, text=True)
-        print("qstat_resp:", qstat_resp)
-        job_spec["status"] = \
-            self._get_status_from_qstat_stdout(work_dir, qstat_resp.stdout)
-        
+        job = otello.Job(job_id=job_id)
+        status = job.get_status()
+        job_spec["status"] = hysds_to_ogc_status.get(status)
+        print(f"Job status {status}")
         return job_spec
 
     def get_job_results(self, job_id):
         job = otello.Job(job_id=job_id)
         products = job.get_generated_products()
+        print(f"Found products: {products}")
         return products
