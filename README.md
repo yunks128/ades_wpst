@@ -61,7 +61,7 @@ For prototype, don't specify the platform when running the docker container
 In the following, set the `ADES_PLATFORM` environment variable to the
 appropriate setting for your platform (examples: K8s, PBS)
 
-    docker run -it -p 5000:5000 -v ${PWD}/sqlite:/ades_wpst/sqlite -e "ADES_PLATFORM=<platform>" <org>/ades-wpst-api:<tag>
+    docker run -it -p 8000:5000 -v ${PWD}/sqlite:/ades_wpst/sqlite -e "ADES_PLATFORM=<platform>" <org>/ades-wpst-api:<tag>
 
 # Try out the OGC ADES/WPS-T endpoints
 You can see the available endpoints by starting with the root endpoint and inspecting the links returned:
