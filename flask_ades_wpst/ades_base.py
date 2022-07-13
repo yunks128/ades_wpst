@@ -110,7 +110,7 @@ class ADES_Base:
         #   estimatedCompletion (dateTime)
         #   nextPoll (dateTime)
         #   percentCompleted (int) in range [0, 100]
-        #job_spec = sqlite_get_job(job_id)
+        # job_spec = sqlite_get_job(job_id)
         # if job was dismissed, then bypass querying the ADES backend
         # job_info = {"jobID": job_id, "status": job_spec["status"]}
         # if job_spec["status"] == "dismissed":
@@ -158,7 +158,10 @@ class ADES_Base:
         :return:
         """
         ades_resp = self._ades.dismiss_job(proc_id, job_id)
-        job_spec = sqlite_dismiss_job(job_id)
+        if ades_resp is None:
+            job_spec = sqlite_dismiss_job(job_id)
+        else:
+            job_spec = {"error": ades_resp}
         return job_spec
 
     def get_job_results(self, proc_id, job_id):

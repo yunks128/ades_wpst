@@ -139,4 +139,4 @@ def flask_wpst(app, debug=False, host="127.0.0.1",
 if __name__ == "__main__":
     print("starting")
     host = parse_args()
-    flask_wpst(app, debug=True, host=host, valid_platforms="HYSDS")
+    flask_wpst(app, debug=True, host=host)

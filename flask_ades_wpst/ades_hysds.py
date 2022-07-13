@@ -125,6 +125,7 @@ class ADES_HYSDS(ADES_ABC):
     def dismiss_job(self, proc_id, job_id):
         # We can only dismiss jobs that were last in accepted or running state.
         # initialize job
+        error = None
         job = otello.Job(job_id=job_id)
         status = job.get_status()
         print("dismiss_job got start status: ", status)
@@ -136,8 +137,8 @@ class ADES_HYSDS(ADES_ABC):
                 # if status is queued then purge (remove) the job
                 job.remove()
         else:
-            raise Exception(f"Can not dismiss a job in {hysds_to_ogc_status.get(status)}.")
-        return
+            error = f"Can not dismiss a job in {hysds_to_ogc_status.get(status)}."
+        return error
 
     def get_jobs(self, proc_id):
         jobs_result = list()
