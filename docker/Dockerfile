@@ -6,16 +6,13 @@ RUN apt-get update -y && \
 RUN git clone https://github.com/hysds/otello.git && \
     cd otello && \
     git checkout unity-dev && \
-    pip install -e . && \
+    pip install -e .
 
-# write to /root/.config/otello/config.yml'?
-
-RUN export ADES_PLATFORM=HYSDS && \
-    echo $ADES_PLATFORM
 
 WORKDIR /flask_ades_wpst
-
 COPY . /flask_ades_wpst
+# write otello config to ~/.config/otello/config.yml'?
+COPY config/otello_config.yml /root/.config/otello/config.yml
 
 RUN python3 setup.py install
 
