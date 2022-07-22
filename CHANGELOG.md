@@ -16,10 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GET /processes/{id}/jobs/{jobID}
   - POST /processes/{id}/jobs/{jobID}
   - GET /processes/{id}/jobs/{jobID}/result
-  
-### Fixed
-
-- Fixed foldouts in Dutch translation
 
 ## [0.1.0] - 2022-04-26
 
