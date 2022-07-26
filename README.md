@@ -166,7 +166,7 @@ See our [releases page]([INSERT LINK TO YOUR RELEASES PAGE]) for our key version
 
 ## Frequently Asked Questions (FAQ)
 
-[INSERT LINK TO FAQ PAGE OR PROVIDE FAQ INLINE HERE]
+No questions yet. Propose a question to be added here by reaching out to our contributors! See support section below.
 <!-- example link to FAQ PAGE>
 Questions about our project? Please see our: [FAQ]([INSERT LINK TO FAQ / DISCUSSION BOARD])
 -->
@@ -179,7 +179,7 @@ Questions about our project? Please see our: [FAQ]([INSERT LINK TO FAQ / DISCUSS
 -->
 
 <!-- example FAQ inline with no questions yet>
-No questions yet. Propose a question to be added here by reaching out to our contributors! See support section below.
+
 -->
 
 <!-- ☝️ Replace with a list of frequently asked questions from your project, or post a link to your FAQ on a discussion board ☝️ -->
@@ -193,12 +193,19 @@ Interested in contributing to our project? Please see our: [CONTRIBUTING.md](CON
 See our: [LICENSE](LICENSE)
 
 ## Support
-
-[INSERT CONTACT INFORMATION OR PROFILE LINKS TO MAINTAINERS AMONG COMMITTER LIST]
-
 <!-- example list of contacts>
-Key points of contact are: [@github-user-1](link to github profile) [@github-user-2](link to github profile)
+Key points of contact are:
+[@github-user-1](link to github profile) [@github-user-2](link to github profile)
 -->
+Key points of contact are:
+
+[NamrataM](https://github.com/NamrataM)
+
+[LucaCinquini](https://github.com/LucaCinquini)
+
+[Drewm-jpl](https://github.com/drewm-jpl)
+
+[DustinKLo](https://github.com/DustinKLo)
 
 <!-- ☝️ Replace with the key individuals who should be contacted for questions ☝️ -->
 
