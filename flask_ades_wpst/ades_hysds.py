@@ -101,6 +101,11 @@ class ADES_HYSDS(ADES_ABC):
         return proc_spec
 
     def exec_job(self, job_spec):
+        """
+
+        :param job_spec:
+        :return:
+        """
         print(job_spec)
         # Make Otello call to submit job with job type and parameters
         m = otello.Mozart()
@@ -116,11 +121,14 @@ class ADES_HYSDS(ADES_ABC):
                 params[input["id"]] = input["data"]
         job.set_input_params(params=params)
         print("Submitting job of type {}\n Parameters: {}".format(proc_id, params))
-        hysds_job = job.submit_job(queue='factotum-job_worker-large', priority=0, tag="test")
-        print(f"Submitted job with id {hysds_job.job_id}")
-        error = None
-        time.sleep(2)
-        return {'job_id': hysds_job.job_id, 'status': hysds_job.get_status(), 'error': error}
+        try:
+            hysds_job = job.submit_job(queue='verdi-job_worker', priority=0, tag="test")
+            print(f"Submitted job with id {hysds_job.job_id}")
+            time.sleep(2)
+            return {'job_id': hysds_job.job_id, 'status': hysds_job.get_status(), 'error': None}
+        except Exception as ex:
+            error = ex
+            return {'job_id': hysds_job.job_id, 'error': error}
 
     def dismiss_job(self, proc_id, job_id):
         # We can only dismiss jobs that were last in accepted or running state.
