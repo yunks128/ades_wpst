@@ -147,7 +147,6 @@ class ADES_Base:
         # ades_resp will return platform specific information that should be 
         # kept in the database with the job ID record
         #sqlite_exec_job(proc_id, job_id, job_inputs, ades_resp)
-        self._ades.exec_job(job_spec)
         return {"code": 201, "location": "{}/processes/{}/jobs/{}".format(self.host, proc_id, job_id)}
             
     def dismiss_job(self, proc_id, job_id):
