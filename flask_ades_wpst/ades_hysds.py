@@ -85,6 +85,59 @@ class ADES_HYSDS(ADES_ABC):
             jt.describe()
 
     def deploy_proc(self, proc_spec):
+        """
+        Register a process in HySDS and add to SQLite DB
+        :param proc_spec: the OGC package deployment payload
+        Example proc_spec:
+        {
+           "processDescription":{
+              "process":{
+                 "id":"job-hello_world:develop",
+                 "title":"Hello World Job",
+                 "owsContext":{
+                    "offering":{
+                       "code":"http://www.opengis.net/eoc/applicationContext/cwl",
+                       "content":{
+                          "href":"https://some-host/CWL/NDVIMultiSensor.cwl"
+                       }
+                    }
+                 },
+                 "abstract":"HySDS Hello World Job",
+                 "keywords":[
+                 ],
+                 "inputs":[
+                 ],
+                 "outputs":[
+                    {
+                       "id":"output",
+                       "title":"hello_world-product",
+                       "formats":[
+                          {
+                             "mimeType":"image/tiff",
+                             "default":true
+                          }
+                       ]
+                    }
+                 ]
+              },
+              "processVersion":"1.0.0",
+              "jobControlOptions":[
+                 "async-execute"
+              ],
+              "outputTransmission":[
+                 "reference"
+              ]
+           },
+           "immediateDeployment":true,
+           "executionUnit":[
+              {
+                 "href":"docker.registry/ndvims:latest"
+              }
+           ],
+           "deploymentProfileName":"http://www.opengis.net/profiles/eoc/dockerizedApplication"
+        }
+        :return:
+        """
         container = proc_spec["executionUnit"][0]["href"]
         local_sif = self._construct_sif_name(container)
         print("local_sif={}".format(local_sif))
