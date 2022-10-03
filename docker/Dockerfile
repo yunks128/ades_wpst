@@ -1,7 +1,9 @@
 FROM ubuntu:20.04
 
 RUN apt-get update -y && \
-    apt-get install -y python3-pip python3-dev
+    apt-get install -y curl && \
+    apt-get install -y python3-pip python3-dev && \
+    curl https://get.docker.com/builds/Linux/x86_64/docker-latest.tgz | tar xvz -C /tmp/ && mv /tmp/docker/docker /usr/bin/docker
 
 WORKDIR /flask_ades_wpst
 
