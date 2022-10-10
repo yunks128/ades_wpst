@@ -8,6 +8,7 @@ RUN git clone https://github.com/hysds/otello.git && \
     git checkout unity-dev && \
     pip install -e .
 
+# TODO: clone the unity-sps-register_job repo
 
 WORKDIR /flask_ades_wpst
 COPY . /flask_ades_wpst
