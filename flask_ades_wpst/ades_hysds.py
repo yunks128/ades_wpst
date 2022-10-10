@@ -9,6 +9,8 @@ from flask_ades_wpst.ades_abc import ADES_ABC
 import otello
 from otello import Mozart
 import time
+import traceback
+import utils.github_util as git
 
 hysds_to_ogc_status = {
     "job-started" : "running",
@@ -65,6 +67,66 @@ class ADES_HYSDS(ADES_ABC):
             # Encountered a PBS job state that is not supported.
             status = "unknown-no-exit-code"
         return status
+
+    def _construct_job_spec(self, cwl_wfl, wfl_inputs):
+        """
+        create the job spec for a process to deploy
+        :return:
+        """
+        command = f"--no-read-only --outdir /tmp {cwl_wfl} /src/workflow.yml"
+        recommended_queues = ["verdi-job_worker"]
+        disk_usage = "200MB"
+        soft_time_limit = 900
+        time_limit = 960
+        imported_worker_files = {
+            "/static-data": [
+                "/static-data",
+                "rw"
+            ],
+            "/tmp": [
+                "/tmp",
+                "rw"
+            ]
+        }
+        params = list()
+
+        for inp in wfl_inputs:
+            hysds_inp = {
+              "name": inp.get("id"),
+              "destination": "context"
+            }
+            params.append(hysds_inp)
+
+        job_spec = {
+            "command": command,
+            "recommended-queues": recommended_queues,
+            "disk_usage": disk_usage,
+            "soft_time_limit": soft_time_limit,
+            "time_limit": time_limit,
+            "imported_worker_files": imported_worker_files,
+            "params": params
+        }
+        return job_spec
+
+    def _construct_hysds_io(self, label, wfl_inputs):
+        """
+        Create HySDS IO
+        :return:
+        """
+        params = list()
+
+        for inp in wfl_inputs:
+            hysds_inp = {
+                "name": inp.get("id"),
+                "from": "submitter"
+            }
+            params.append(hysds_inp)
+        hysds_io = {
+            "label": label,
+            "params": params,
+            "enable_dedup": True
+        }
+        return hysds_io
 
     def get_procs(self):
         """
@@ -138,13 +200,63 @@ class ADES_HYSDS(ADES_ABC):
         }
         :return:
         """
-        container = proc_spec["executionUnit"][0]["href"]
-        local_sif = self._construct_sif_name(container)
-        print("local_sif={}".format(local_sif))
-        print("Localizing container {} to {}".format(container, local_sif))
-        run([self._module_cmd, "bash", "load", "singularity"])
-        run([self._singularity_cmd, "pull", local_sif, container])
-        return proc_spec
+        error = None
+        try:
+            # Parse the request
+            # Get process ID
+            proc_id = proc_spec.get("processDescription").get("process").get("id")
+            # Get process Label
+            proc_label = proc_spec.get("processDescription").get("process").get("abstract")
+            # Get process version
+            proc_version = proc_spec.get("processDescription").get("processVersion")
+            process_name = f"job-{proc_id}:{proc_version}"
+            # cwl document for workflow
+            cwl_wfl_location = proc_spec.get("processDescription").get("process").get("owsContext").get("offering")\
+                .get("content").get("href")
+            # extract workflow inputs
+            wfl_inps = proc_spec.get("processDescription").get("process").get("inputs")
+            # get base docker container location
+            base_docker = proc_spec.get("executionUnit")[0].get("href")
+
+            job_spec = self._construct_job_spec(cwl_wfl=cwl_wfl_location, wfl_inputs=wfl_inps)
+            hysds_io = self._construct_hysds_io(label=proc_label, wfl_inputs=wfl_inps)
+
+            # Write the HySDS spec files to the register-job repo
+            register_job_location = f"TBD/docker"
+            with open(f"{register_job_location}/hysds-io.json.{proc_id}", 'w') as iofile:
+                # open a file with the name that we have assigned stac file name, it's in write mode hence 'w'
+                # outfile is a variable that stands for open, json dump the document into stac file
+                json.dump(hysds_io, iofile, indent=4)
+            with open(f"{register_job_location}/job-spec.json.{proc_id}", 'w') as specfile:
+                # open a file with the name that we have assigned stac file name, it's in write mode hence 'w'
+                # outfile is a variable that stands for open, json dump the document into stac file
+                json.dump(job_spec, specfile, indent=4)
+        except Exception as ex:
+            tb = traceback.format_exc()
+            error = f"Failed to create ADES required files for process deployment.\n {ex}.\n{tb}"
+
+        # TODO: Call container builder
+        container_built = True  # to be replaced by some function / code
+
+        # TODO: if container build was successful then push up job specs to register-job repo
+        if container_built:
+            try:
+                repo = None # to be replaced by some function / code
+                # TODO: figure out how to assign repo without git clone
+                commit_hash = git.update_git_repo(repo,
+                                                  repo_path=register_job_location,
+                                                  repo_name="unity-sps-register_job",
+                                                  algorithm_name=proc_id)
+                print("Updated Register Job repo with hash {}".format(commit_hash))
+            except Exception as ex:
+                tb = traceback.format_exc()
+                error = "Failed to register {}\n Exception: {}\n Error: {}".format(f"{proc_id}:{proc_version}", ex, tb)
+        else:
+            error = "Failed to register {}\n Exception: {}\n Error: {}".format(f"{proc_id}:{proc_version}")
+
+        if error is not None:
+            raise RuntimeError(error)
+        return
 
     def undeploy_proc(self, proc_spec):
         container = proc_spec["executionUnit"]

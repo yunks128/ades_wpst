@@ -85,7 +85,10 @@ class ADES_Base:
         proc_summ['processDescriptionURL'] = proc_desc_url
 
         sqlite_deploy_proc(req_proc)
-        # ades_resp = self._ades.deploy_proc(proc_spec)
+        try:
+            self._ades.deploy_proc(req_proc)
+        except Exception as ex:
+            print(f"Failed to create ADES required files for process deployment. {ex.message}")
         return proc_summ
             
     def undeploy_proc(self, proc_id):
