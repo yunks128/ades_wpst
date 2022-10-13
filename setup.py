@@ -23,5 +23,6 @@ setup(
         "cwl-runner==1.0",
         "docker==6.0.0",
         "jsonschema==4.5.1",
+        "GitPython==3.1.29",
     ],
 )
