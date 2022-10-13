@@ -2,6 +2,7 @@
 ADES WPS-T layer for HySDS
 Author: Namrata Malarout
 """
+import sys
 import os
 from subprocess import run
 import json
@@ -10,6 +11,9 @@ import otello
 from otello import Mozart
 import time
 import traceback
+
+sys.path.append("..")
+
 import utils.github_util as git
 from utils.image_container_builder import ContainerImageBuilder
 
@@ -237,43 +241,35 @@ class ADES_HYSDS(ADES_ABC):
             tb = traceback.format_exc()
             error = f"Failed to create ADES required files for process deployment.\n {ex}.\n{tb}"
 
-        # TODO: Call container builder
-        container_built = True  # to be replaced by some function / code
-        cb = ContainerImageBuilder(
-            image_name=proc_id,
-            image_tag=proc_version,
-            job_repo_path=register_job_location,
-        )
-        cb.validate_hysds_ios()
-        cb.validate_job_specs()
+        try:
+            cb = ContainerImageBuilder(
+                image_name=proc_id,
+                image_tag=proc_version,
+                job_repo_path=register_job_location,
+            )
+            cb.validate_hysds_ios()
+            cb.validate_job_specs()
 
-        cb.build_image()
-        image_url = cb.push_image()
+            cb.build_image()
+            image_url = cb.push_image()
 
-        cb.publish_job_spec()
-        cb.publish_hysds_io()
-        cb.publish_container(image_url)
+            cb.publish_job_spec()
+            cb.publish_hysds_io()
+            cb.publish_container(image_url)
 
-        # TODO: if container build was successful then push up job specs to register-job repo
-        if container_built:
-            try:
-                repo = None  # to be replaced by some function / code
-                # TODO: figure out how to assign repo without git clone
-                commit_hash = git.update_git_repo(
-                    repo,
-                    repo_path=register_job_location,
-                    repo_name="unity-sps-register_job",
-                    algorithm_name=proc_id,
-                )
-                print("Updated Register Job repo with hash {}".format(commit_hash))
-            except Exception as ex:
-                tb = traceback.format_exc()
-                error = "Failed to register {}\n Exception: {}\n Error: {}".format(
-                    f"{proc_id}:{proc_version}", ex, tb
-                )
-        else:
+            repo = None  # to be replaced by some function / code
+            # TODO: figure out how to assign repo without git clone
+            commit_hash = git.update_git_repo(
+                repo,
+                repo_path=register_job_location,
+                repo_name="unity-sps-register_job",
+                algorithm_name=proc_id,
+            )
+            print("Updated Register Job repo with hash {}".format(commit_hash))
+        except Exception as ex:
+            tb = traceback.format_exc()
             error = "Failed to register {}\n Exception: {}\n Error: {}".format(
-                f"{proc_id}:{proc_version}"
+                f"{proc_id}:{proc_version}", ex, tb
             )
 
         if error is not None:
