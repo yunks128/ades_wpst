@@ -257,15 +257,15 @@ class ADES_HYSDS(ADES_ABC):
             cb.publish_hysds_io()
             cb.publish_container(image_url)
 
-            repo = None  # to be replaced by some function / code
-            # TODO: figure out how to assign repo without git clone
-            commit_hash = git.update_git_repo(
-                repo,
-                repo_path=register_job_location,
-                repo_name="unity-sps-register_job",
-                algorithm_name=proc_id,
-            )
-            print("Updated Register Job repo with hash {}".format(commit_hash))
+            # repo = None  # to be replaced by some function / code
+            # # TODO: figure out how to assign repo without git clone
+            # commit_hash = git.update_git_repo(
+            #     repo,
+            #     repo_path=register_job_location,
+            #     repo_name="unity-sps-register_job",
+            #     algorithm_name=proc_id,
+            # )
+            # print("Updated Register Job repo with hash {}".format(commit_hash))
         except Exception as ex:
             tb = traceback.format_exc()
             error = "Failed to register {}\n Exception: {}\n Error: {}".format(
@@ -274,6 +274,7 @@ class ADES_HYSDS(ADES_ABC):
 
         if error is not None:
             raise RuntimeError(error)
+
         return
 
     def undeploy_proc(self, proc_spec):
