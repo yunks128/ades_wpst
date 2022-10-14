@@ -224,15 +224,15 @@ class ADES_HYSDS(ADES_ABC):
             hysds_io = self._construct_hysds_io(label=proc_label, wfl_inputs=wfl_inps)
 
             # Write the HySDS spec files to the register-job repo
-            register_job_location = "/unity-sps-register_job/docker"
+            register_job_location = "/unity-sps-register_job"
             with open(
-                f"{register_job_location}/hysds-io.json.{proc_id}", "w"
+                f"{register_job_location}/docker/hysds-io.json.{proc_id}", "w"
             ) as iofile:
                 # open a file with the name that we have assigned stac file name, it's in write mode hence 'w'
                 # outfile is a variable that stands for open, json dump the document into stac file
                 json.dump(hysds_io, iofile, indent=4)
             with open(
-                f"{register_job_location}/job-spec.json.{proc_id}", "w"
+                f"{register_job_location}/docker/job-spec.json.{proc_id}", "w"
             ) as specfile:
                 # open a file with the name that we have assigned stac file name, it's in write mode hence 'w'
                 # outfile is a variable that stands for open, json dump the document into stac file
