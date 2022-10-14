@@ -224,7 +224,7 @@ class ADES_HYSDS(ADES_ABC):
             hysds_io = self._construct_hysds_io(label=proc_label, wfl_inputs=wfl_inps)
 
             # Write the HySDS spec files to the register-job repo
-            register_job_location = f"TBD/docker"
+            register_job_location = "/unity-sps-register_job/docker"
             with open(
                 f"{register_job_location}/hysds-io.json.{proc_id}", "w"
             ) as iofile:
