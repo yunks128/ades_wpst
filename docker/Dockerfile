@@ -16,8 +16,8 @@ RUN git clone https://github.com/hysds/otello.git && \
     git checkout unity-dev && \
     pip install -e .
 
-# RUN git clone https://github.com/unity-sds/unity-sps-register_job.git
-RUN git clone -b deploy-process https://github.com/drewm-jpl/unity-sps-register_job.git
+RUN git clone https://github.com/unity-sds/unity-sps-register_job.git
+# RUN git clone -b deploy-process https://github.com/drewm-jpl/unity-sps-register_job.git
 
 WORKDIR /flask_ades_wpst
 COPY . /flask_ades_wpst
