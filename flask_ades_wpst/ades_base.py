@@ -84,9 +84,9 @@ class ADES_Base:
         proc_summ['jobControlOptions'] = job_control
         proc_summ['processDescriptionURL'] = proc_desc_url
 
-        sqlite_deploy_proc(req_proc)
         try:
             self._ades.deploy_proc(req_proc)
+            sqlite_deploy_proc(req_proc)
         except Exception as ex:
             print(f"Failed to create ADES required files for process deployment. {ex.message}")
         return proc_summ

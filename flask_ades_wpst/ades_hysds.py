@@ -73,7 +73,7 @@ class ADES_HYSDS(ADES_ABC):
         create the job spec for a process to deploy
         :return:
         """
-        command = f"--no-read-only --outdir /tmp {cwl_wfl} /src/workflow.yml"
+        command = f"{cwl_wfl}"
         recommended_queues = ["verdi-job_worker"]
         disk_usage = "200MB"
         soft_time_limit = 900
