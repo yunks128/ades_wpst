@@ -72,7 +72,7 @@ class ADES_Base:
         proc_keywords = proc['keywords']
         proc_version = proc_desc['processVersion']
         job_control = proc_desc['jobControlOptions']
-        proc_desc_url = "{}/processes/{}".format(self.host, proc_id)
+        proc_desc_url = "{}/processes/{}".format(self.host, f"{proc_id}:{proc_version}")
 
         # creating response
         proc_summ = dict()
@@ -92,9 +92,9 @@ class ADES_Base:
         return proc_summ
             
     def undeploy_proc(self, proc_id):
+        #self._ades.undeploy_proc(proc_id)
         proc_desc = self.proc_dict(sqlite_undeploy_proc(proc_id))
         print("proc_desc: ", proc_desc)
-        # ades_resp = self._ades.undeploy_proc(proc_desc)
         return proc_desc
 
     def get_jobs(self, proc_id=None):

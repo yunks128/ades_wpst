@@ -8,6 +8,7 @@ import json
 from flask_ades_wpst.ades_abc import ADES_ABC
 import otello
 from otello import Mozart
+import requests
 import time
 import traceback
 import utils.github_util as git
@@ -258,12 +259,47 @@ class ADES_HYSDS(ADES_ABC):
             raise RuntimeError(error)
         return
 
-    def undeploy_proc(self, proc_spec):
-        container = proc_spec["executionUnit"]
-        local_sif = self._construct_sif_name(container)
-        print("Removing local SIF {}".format(local_sif))
-        os.remove(local_sif)
-        return proc_spec
+    def undeploy_proc(self, proc_id):
+        get_jobspec_endpoint = os.path.join(
+            self._MOZART_REST_API, "job_spec/type"
+        )
+        remove_jobspec_endpoint = os.path.join(
+            self._MOZART_REST_API, "job_spec/remove"
+        )
+        remove_hysdsio_endpoint = os.path.join(
+            self._MOZART_REST_API, "container/add"
+        )
+        remove_container_endpoint = os.path.join(
+            self._MOZART_REST_API, "container/remove"
+        )
+
+        try:
+            print(f"Getting container id information for job type {proc_id}")
+            r = requests.get(get_jobspec_endpoint, params={"id": proc_id}, verify=False)
+            response = r.json()
+            if response.get("success"):
+                container_id = response.get("result").get("container")
+                print(f"Found container {container_id} for job type {proc_id}")
+            else:
+                raise RuntimeError(f"Container information not found for job type {proc_id}. {r}")
+        except Exception as ex:
+            raise Exception(ex)
+        try:
+            print(f"Deleting container {container_id}")
+            requests.get(remove_container_endpoint, params={"id": proc_id}, verify=False)
+        except Exception as ex:
+            raise Exception(f"Failed to delete container {container_id}. {ex}")
+        try:
+            print(f"Deleting hysds-io for {proc_id}")
+            requests.get(remove_hysdsio_endpoint, params={"id": proc_id}, verify=False)
+        except Exception as ex:
+            raise Exception(f"Failed to delete hysds-io {container_id}. {ex}")
+        try:
+            print(f"Deleting jobspec for {proc_id}")
+            requests.get(remove_jobspec_endpoint, params={"id": proc_id}, verify=False)
+        except Exception as ex:
+            raise Exception(f"Failed to delete jobspec {container_id}. {ex}")
+        return
 
     def exec_job(self, job_spec):
         """

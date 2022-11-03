@@ -99,7 +99,7 @@ def sqlite_deploy_proc(proc_spec):
                                        immediateDeployment, executionUnit)
                  VALUES(\"{}\", \"{}\", \"{}\", \"{}\", \"{}\", \"{}\", 
                         \"{}\", \"{}\", \"{}\", \"{}\");""".\
-                 format(proc_desc2["id"], proc_desc2["title"],
+                 format(f"{proc_desc2['id']}:{proc_desc['processVersion']}", proc_desc2["title"],
                         proc_desc2["abstract"],
                         ','.join(proc_desc2["keywords"]),
                         proc_desc2["owsContext"]["offering"]["content"]["href"],
@@ -111,7 +111,7 @@ def sqlite_deploy_proc(proc_spec):
                                   for d in proc_spec["executionUnit"]]))
     cur.execute(sql_str)
     conn.commit()
-    return sqlite_get_proc(proc_desc2["id"])
+    return sqlite_get_proc(f"{proc_desc2['id']}:{proc_desc['processVersion']}")
 
 @sqlite_db
 def sqlite_undeploy_proc(proc_id):
