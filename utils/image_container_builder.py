@@ -191,9 +191,9 @@ class ContainerImageBuilder:
         image = self.client.images.get(self.image_name_tag)
         digest = image.id
         metadata = {
-            "name": self._build_container_name(),
+            "name": image_url,
             "version": self.image_tag,
-            "url": image_url,
+            "url": "placeholder",
             "digest": digest,
             "resource": "container",
         }
@@ -217,7 +217,9 @@ class ContainerImageBuilder:
         fps = os.path.join(self.job_repo_path, "docker")
         for p in filter(lambda x: x.startswith("job-spec"), os.listdir(fps)):
             metadata = dict()
-            metadata["container"] = self._build_container_name()
+            metadata[
+                "container"
+            ] = f"{self._CR_SERVER}/{self._CR_OWNER}/{self.image_name_tag}"
             metadata["job-version"] = self.image_tag
             metadata["resource"] = "jobspec"
             metadata["id"] = self._build_job_spec_name(p)
