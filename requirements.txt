@@ -4,3 +4,6 @@ pyyaml==5.4.1
 kubernetes==19.15.0
 cwltool==3.1.20211107152837
 cwl-runner==1.0
+docker==6.0.0
+jsonschema==4.5.1
+GitPython==3.1.29
