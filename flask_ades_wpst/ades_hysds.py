@@ -266,16 +266,13 @@ class ADES_HYSDS(ADES_ABC):
         remove_jobspec_endpoint = os.path.join(
             self._MOZART_REST_API, "job_spec/remove"
         )
-        remove_hysdsio_endpoint = os.path.join(
-            self._MOZART_REST_API, "container/add"
-        )
         remove_container_endpoint = os.path.join(
             self._MOZART_REST_API, "container/remove"
         )
 
         try:
-            print(f"Getting container id information for job type {proc_id}")
-            r = requests.get(get_jobspec_endpoint, params={"id": proc_id}, verify=False)
+            print(f"Getting container id information for job type job-{proc_id}")
+            r = requests.get(get_jobspec_endpoint, params={"id": f"job-{proc_id}"}, verify=False)
             response = r.json()
             if response.get("success"):
                 container_id = response.get("result").get("container")
@@ -286,19 +283,14 @@ class ADES_HYSDS(ADES_ABC):
             raise Exception(ex)
         try:
             print(f"Deleting container {container_id}")
-            requests.get(remove_container_endpoint, params={"id": proc_id}, verify=False)
+            requests.get(remove_container_endpoint, params={"id": container_id}, verify=False)
         except Exception as ex:
             raise Exception(f"Failed to delete container {container_id}. {ex}")
         try:
-            print(f"Deleting hysds-io for {proc_id}")
-            requests.get(remove_hysdsio_endpoint, params={"id": proc_id}, verify=False)
+            print(f"Deleting jobspec for job-{proc_id}")
+            requests.get(remove_jobspec_endpoint, params={"id": f"job-{proc_id}"}, verify=False)
         except Exception as ex:
-            raise Exception(f"Failed to delete hysds-io {container_id}. {ex}")
-        try:
-            print(f"Deleting jobspec for {proc_id}")
-            requests.get(remove_jobspec_endpoint, params={"id": proc_id}, verify=False)
-        except Exception as ex:
-            raise Exception(f"Failed to delete jobspec {container_id}. {ex}")
+            raise Exception(f"Failed to delete jobspec job-{proc_id}. {ex}")
         return
 
     def exec_job(self, job_spec):
@@ -310,7 +302,7 @@ class ADES_HYSDS(ADES_ABC):
         print(job_spec)
         # Make Otello call to submit job with job type and parameters
         m = otello.Mozart()
-        proc_id = job_spec.get("proc_id")
+        proc_id = f"job-{job_spec.get('proc_id')}"
         print(proc_id)
         print(job_spec.get("inputs").get("inputs"))
         job = m.get_job_type(proc_id)
@@ -321,7 +313,7 @@ class ADES_HYSDS(ADES_ABC):
             for input in job_spec.get("inputs").get("inputs"):
                 params[input["id"]] = input["data"]
         job.set_input_params(params=params)
-        print("Submitting job of type {}\n Parameters: {}".format(proc_id, params))
+        print("Submitting job of type job-{}\n Parameters: {}".format(proc_id, params))
         try:
             hysds_job = job.submit_job(queue='verdi-job_worker', priority=0, tag="test")
             print(f"Submitted job with id {hysds_job.job_id}")
@@ -353,12 +345,12 @@ class ADES_HYSDS(ADES_ABC):
         jobs_result = list()
         m = otello.Mozart()
         job_set = m.get_jobs()
-        print(f"filtering jobs for process {proc_id}")
+        print(f"filtering jobs for process job-{proc_id}")
         # {"jobID": job_id, "status": job_info["status"], "message": "Status of job {}".format(job_id)}
         for job in job_set:
             job_dets = dict()
             job_info = job.get_info()
-            if job_info.get("type") == proc_id:
+            if job_info.get("type") == f"job-{proc_id}":
                 job_dets["jobID"] = job_info.get("payload_id")
                 job_dets["status"] = hysds_to_ogc_status.get(job.get_status())
                 job_dets["inputs"] = job_info.get("job").get("params").get("job_specification").get("params")
