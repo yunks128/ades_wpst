@@ -323,13 +323,13 @@ class ADES_HYSDS(ADES_ABC):
         m = otello.Mozart()
         proc_id = f"job-{job_spec.get('proc_id')}"
         print(proc_id)
-        print(job_spec.get("inputs").get("inputs"))
+        print(job_spec.get("inputs").get("processDescription").get("process").get("inputs"))
         job = m.get_job_type(proc_id)
         job.initialize()  # retrieving the Job wiring and parameters
         # Create params dictionary
         params = dict()
-        if len(job_spec.get("inputs").get("inputs")) != 0:
-            for input in job_spec.get("inputs").get("inputs"):
+        if len(job_spec.get("inputs").get("processDescription").get("process").get("inputs")) != 0:
+            for input in job_spec.get("inputs").get("processDescription").get("process").get("inputs"):
                 params[input["id"]] = input["data"]
         job.set_input_params(params=params)
         print("Submitting job of type job-{}\n Parameters: {}".format(proc_id, params))
