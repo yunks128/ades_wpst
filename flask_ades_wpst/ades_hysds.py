@@ -116,7 +116,7 @@ class ADES_HYSDS(ADES_ABC):
         params = list()
 
         for inp in wfl_inputs:
-            hysds_inp = {"name": inp.get("id"), "from": "submitter"}
+            hysds_inp = {"name": inp.get("id"), "from": "submitter", "type": "text"}
             params.append(hysds_inp)
         hysds_io = {"label": label, "params": params, "enable_dedup": True}
         return hysds_io
