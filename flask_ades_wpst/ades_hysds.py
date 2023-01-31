@@ -119,6 +119,7 @@ class ADES_HYSDS(ADES_ABC):
             hysds_inp = {"name": inp.get("id"), "from": "submitter", "type": "text"}
             params.append(hysds_inp)
         hysds_io = {"label": label, "params": params, "enable_dedup": True}
+        print(hysds_io)
         return hysds_io
 
     def get_procs(self):
@@ -323,13 +324,13 @@ class ADES_HYSDS(ADES_ABC):
         m = otello.Mozart()
         proc_id = f"job-{job_spec.get('proc_id')}"
         print(proc_id)
-        print(job_spec.get("inputs").get("processDescription").get("process").get("inputs"))
+        print(job_spec.get("inputs").get("inputs"))
         job = m.get_job_type(proc_id)
         job.initialize()  # retrieving the Job wiring and parameters
         # Create params dictionary
         params = dict()
-        if len(job_spec.get("inputs").get("processDescription").get("process").get("inputs")) != 0:
-            for input in job_spec.get("inputs").get("processDescription").get("process").get("inputs"):
+        if len(job_spec.get("inputs").get("inputs")) != 0:
+            for input in job_spec.get("inputs").get("inputs"):
                 params[input["id"]] = input["data"]
         job.set_input_params(params=params)
         print("Submitting job of type job-{}\n Parameters: {}".format(proc_id, params))
