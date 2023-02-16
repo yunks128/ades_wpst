@@ -128,7 +128,11 @@ class ADES_HYSDS(ADES_ABC):
         :return: proc_desc dictionary as returned by payload
         :param proc_id: the proc_id as registered with wps-t
         """
-        return {"process": "testproc"}
+        m = otello.Mozart()
+        proc_id = f"job-{proc_id}"
+        job_type = m.get_job_type(proc_id)
+        job_type.initialize()
+        return {"process": f"{proc_id}", "job_spec": {job_type.job_spec}, "hysds_io": {job_type.hysds_io}, "params": {job_type._params}}
 
     def get_procs(self):
         """
@@ -147,6 +151,7 @@ class ADES_HYSDS(ADES_ABC):
             jt = m.get_job_type(proc_name)
             jt.initialize()
             jt.describe()
+        return [str(jt) for jt in job_types]
 
     def deploy_proc(self, proc_spec):
         """
