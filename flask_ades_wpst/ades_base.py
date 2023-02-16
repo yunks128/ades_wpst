@@ -53,8 +53,8 @@ class ADES_Base:
         return procs
     
     def get_proc(self, proc_id):
-        proc_desc = sqlite_get_proc(proc_id)
-        return self.proc_dict(proc_desc)
+        proc_desc = self._ades.get_proc(proc_id)
+        return proc_desc
     
     def deploy_proc(self, req_proc):
         """

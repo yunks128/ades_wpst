@@ -122,6 +122,14 @@ class ADES_HYSDS(ADES_ABC):
         print(hysds_io)
         return hysds_io
 
+    def get_proc(self, proc_id):
+        """
+        Get job type from HySDS with given proc_id
+        :return: proc_desc dictionary as returned by payload
+        :param proc_id: the proc_id as registered with wps-t
+        """
+        return {"process": "testproc"}
+
     def get_procs(self):
         """
         Get all job types in HySDS
