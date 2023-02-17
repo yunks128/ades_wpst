@@ -132,7 +132,7 @@ class ADES_HYSDS(ADES_ABC):
         proc_id = f"job-{proc_id}"
         job_type = m.get_job_type(proc_id)
         job_type.initialize()
-        return {"process": f"{proc_id}", "job_spec": {job_type.job_spec}, "hysds_io": {job_type.hysds_io}, "params": {job_type._params}}
+        return {"process": proc_id, "job_spec": job_type.job_spec, "hysds_io": job_type.hysds_io, "params": job_type._params}
 
     def get_procs(self):
         """
