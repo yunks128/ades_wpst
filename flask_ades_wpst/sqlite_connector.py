@@ -99,9 +99,8 @@ def sqlite_deploy_proc(proc_spec):
                                        owsContextURL, inputs, outputs, processVersion, 
                                        jobControlOptions, outputTransmission,
                                        immediateDeployment, executionUnit)
-                 VALUES(\"{}\", \"{}\", \"{}\", \"{}\", \"{}\", \"{}\", \"{}\", \"{}\", 
-                        \"{}\", \"{}\", \"{}\", \"{}\");""".\
-                 format(f"{proc_desc2['id']}:{proc_desc['processVersion']}", proc_desc2["title"],
+                 VALUES(?, ?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?);"""
+    cur.execute(sql_str, [f"{proc_desc2['id']}:{proc_desc['processVersion']}", proc_desc2["title"],
                         proc_desc2["abstract"],
                         ','.join(proc_desc2["keywords"]),
                         proc_desc2["owsContext"]["offering"]["content"]["href"],
@@ -112,8 +111,7 @@ def sqlite_deploy_proc(proc_spec):
                         ','.join(proc_desc["outputTransmission"]),
                         int(proc_spec["immediateDeployment"]),
                         ','.join([d["href"]
-                                  for d in proc_spec["executionUnit"]]))
-    cur.execute(sql_str)
+                                  for d in proc_spec["executionUnit"]])])
     conn.commit()
     return sqlite_get_proc(f"{proc_desc2['id']}:{proc_desc['processVersion']}")
 
