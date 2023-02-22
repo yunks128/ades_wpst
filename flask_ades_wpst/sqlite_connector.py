@@ -99,7 +99,7 @@ def sqlite_deploy_proc(proc_spec):
                                        owsContextURL, inputs, outputs, processVersion, 
                                        jobControlOptions, outputTransmission,
                                        immediateDeployment, executionUnit)
-                 VALUES(\"{}\", \"{}\", \"{}\", \"{}\", \"{}\", \"{}\", 
+                 VALUES(\"{}\", \"{}\", \"{}\", \"{}\", \"{}\", \"{}\", \"{}\", \"{}\", 
                         \"{}\", \"{}\", \"{}\", \"{}\");""".\
                  format(f"{proc_desc2['id']}:{proc_desc['processVersion']}", proc_desc2["title"],
                         proc_desc2["abstract"],
