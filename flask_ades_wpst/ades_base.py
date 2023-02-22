@@ -41,11 +41,13 @@ class ADES_Base:
                 "abstract": proc[2],
                 "keywords": proc[3],
                 "owsContextURL": proc[4],
-                "processVersion": proc[5],
-                "jobControlOptions": proc[6].split(','),
-                "outputTransmission": proc[7].split(','),
-                "immediateDeployment": str(bool(proc[8])).lower(),
-                "executionUnit": proc[9]}
+                "inputs": proc[5],
+                "outputs": proc[6],
+                "processVersion": proc[7],
+                "jobControlOptions": proc[8].split(','),
+                "outputTransmission": proc[9].split(','),
+                "immediateDeployment": str(bool(proc[9])).lower(),
+                "executionUnit": proc[10]}
     
     def get_procs(self):
         saved_procs = sqlite_get_procs()
