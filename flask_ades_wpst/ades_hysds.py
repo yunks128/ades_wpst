@@ -122,30 +122,6 @@ class ADES_HYSDS(ADES_ABC):
         print(hysds_io)
         return hysds_io
 
-    def _translate_hysds_params_to_wpst_inputs(self, hysds_param):
-        """
-        Translates hysds param dict to wpst inputs dict
-        :return: wps-t inputs dict
-        :param hysds_param: parameter for a job type
-        """
-        wpst_input = {}
-        wpst_input['id'] = hysds_param['name']
-        
-
-    def _translate_hysds_process_to_wpst(self, hysds_job_type):
-        """
-        Produces WPS-T process dict for process endpoint response from hysds job type object
-        Assumes hysds job type has been initialized and populated with values
-        :return: WPS-T process object
-        :param hysds_job_type: fully initialized JobType object from hysds otello
-        """
-        proc_desc = {}
-        proc_desc['id'] = hysds_job_type.job_spec
-        proc_desc['title'] = hysds_job_type.job_spec
-        proc_desc['abstract'] = hysds_job_type.label
-        proc_desc['inputs'] = [self._translate_hysds_params_to_wpst_inputs(param) for param in hysds_job_type.hysds_ios['params']]
-
-
     def get_proc(self, proc_id):
         """
         Get job type from HySDS with given proc_id
@@ -157,7 +133,7 @@ class ADES_HYSDS(ADES_ABC):
         job_type = m.get_job_type(proc_id)
         job_type.initialize()
         job_type.describe()
-        return {"process": proc_id, "job_spec": job_type.job_spec, "hysds_io": job_type.hysds_io, "params": job_type._params}
+        return str(job_type)
 
     def get_procs(self):
         """

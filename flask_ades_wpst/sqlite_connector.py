@@ -49,6 +49,8 @@ def sqlite_db(func):
                                           abstract TEXT,
                                           keywords TEXT,
                                           owsContextURL TEXT,
+                                          inputs TEXT,
+                                          outputs TEXT,
                                           processVersion TEXT,
                                           jobControlOptions TEXT,
                                           outputTransmission TEXT,
@@ -94,7 +96,7 @@ def sqlite_deploy_proc(proc_spec):
     conn = create_connection(db_name)
     cur = conn.cursor()
     sql_str = """INSERT INTO processes(id, title, abstract, keywords, 
-                                       owsContextURL, processVersion, 
+                                       owsContextURL, inputs, outputs, processVersion, 
                                        jobControlOptions, outputTransmission,
                                        immediateDeployment, executionUnit)
                  VALUES(\"{}\", \"{}\", \"{}\", \"{}\", \"{}\", \"{}\", 
@@ -103,6 +105,8 @@ def sqlite_deploy_proc(proc_spec):
                         proc_desc2["abstract"],
                         ','.join(proc_desc2["keywords"]),
                         proc_desc2["owsContext"]["offering"]["content"]["href"],
+                        ','.join([str(inp) for inp in proc_desc2["inputs"]]),
+                        ','.join([str(outp) for outp in proc_desc2["outputs"]]),
                         proc_desc["processVersion"],
                         ','.join(proc_desc["jobControlOptions"]),
                         ','.join(proc_desc["outputTransmission"]),

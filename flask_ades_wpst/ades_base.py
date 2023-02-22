@@ -57,7 +57,6 @@ class ADES_Base:
         TODO: sqlite_get_proc vulnerable to sql injeciton through proc_id
         """
         saved_proc = sqlite_get_proc(proc_id)
-        hysds_proc = self._ades.get_proc(proc_id)
         return self.proc_dict(saved_proc)
     
     def deploy_proc(self, req_proc):
