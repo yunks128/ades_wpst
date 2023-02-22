@@ -53,8 +53,12 @@ class ADES_Base:
         return procs
     
     def get_proc(self, proc_id):
-        proc_desc = self._ades.get_proc(proc_id)
-        return proc_desc
+        """
+        TODO: sqlite_get_proc vulnerable to sql injeciton through proc_id
+        """
+        saved_proc = sqlite_get_proc(proc_id)
+        hysds_proc = self._ades.get_proc(proc_id)
+        return self.proc_dict(saved_proc)
     
     def deploy_proc(self, req_proc):
         """
