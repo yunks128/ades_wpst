@@ -49,6 +49,8 @@ def sqlite_db(func):
                                           abstract TEXT,
                                           keywords TEXT,
                                           owsContextURL TEXT,
+                                          inputs TEXT,
+                                          outputs TEXT,
                                           processVersion TEXT,
                                           jobControlOptions TEXT,
                                           outputTransmission TEXT,
@@ -94,22 +96,22 @@ def sqlite_deploy_proc(proc_spec):
     conn = create_connection(db_name)
     cur = conn.cursor()
     sql_str = """INSERT INTO processes(id, title, abstract, keywords, 
-                                       owsContextURL, processVersion, 
+                                       owsContextURL, inputs, outputs, processVersion, 
                                        jobControlOptions, outputTransmission,
                                        immediateDeployment, executionUnit)
-                 VALUES(\"{}\", \"{}\", \"{}\", \"{}\", \"{}\", \"{}\", 
-                        \"{}\", \"{}\", \"{}\", \"{}\");""".\
-                 format(f"{proc_desc2['id']}:{proc_desc['processVersion']}", proc_desc2["title"],
+                 VALUES(?, ?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?);"""
+    cur.execute(sql_str, [f"{proc_desc2['id']}:{proc_desc['processVersion']}", proc_desc2["title"],
                         proc_desc2["abstract"],
                         ','.join(proc_desc2["keywords"]),
                         proc_desc2["owsContext"]["offering"]["content"]["href"],
+                        json.dumps(proc_desc2["inputs"]),
+                        json.dumps(proc_desc2["outputs"]),
                         proc_desc["processVersion"],
                         ','.join(proc_desc["jobControlOptions"]),
                         ','.join(proc_desc["outputTransmission"]),
                         int(proc_spec["immediateDeployment"]),
                         ','.join([d["href"]
-                                  for d in proc_spec["executionUnit"]]))
-    cur.execute(sql_str)
+                                  for d in proc_spec["executionUnit"]])])
     conn.commit()
     return sqlite_get_proc(f"{proc_desc2['id']}:{proc_desc['processVersion']}")
 

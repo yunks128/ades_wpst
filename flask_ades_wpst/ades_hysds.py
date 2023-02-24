@@ -122,6 +122,19 @@ class ADES_HYSDS(ADES_ABC):
         print(hysds_io)
         return hysds_io
 
+    def get_proc(self, proc_id):
+        """
+        Get job type from HySDS with given proc_id
+        :return: proc_desc dictionary as returned by payload
+        :param proc_id: the proc_id as registered with wps-t
+        """
+        m = otello.Mozart()
+        proc_id = f"job-{proc_id}"
+        job_type = m.get_job_type(proc_id)
+        job_type.initialize()
+        job_type.describe()
+        return str(job_type)
+
     def get_procs(self):
         """
         Get all job types in HySDS
@@ -139,6 +152,7 @@ class ADES_HYSDS(ADES_ABC):
             jt = m.get_job_type(proc_name)
             jt.initialize()
             jt.describe()
+        return [str(jt) for jt in job_types]
 
     def deploy_proc(self, proc_spec):
         """
