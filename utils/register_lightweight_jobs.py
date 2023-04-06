@@ -10,8 +10,8 @@ parser.add_argument("--image-tag", type=str, help="Tag of the Docker image to bu
 parser.add_argument(
     "--register-job-location",
     type=str,
-    default="/unity-sps-register_job",
-    help="Location of the job repository",
+    default="/lightweight-jobs",
+    help="Location of the lightweight jobs repository",
 )
 args = parser.parse_args()
 
