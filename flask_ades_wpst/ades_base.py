@@ -24,7 +24,7 @@ class ADES_Base:
             from flask_ades_wpst.ades_k8s import ADES_K8s as ADES_Platform
         elif self._platform == "PBS":
             from flask_ades_wpst.ades_pbs import ADES_PBS as ADES_Platform
-        elif self.platform == "HYSDS":
+        elif self._platform == "HYSDS":
             from flask_ades_wpst.ades_hysds import ADES_HYSDS as ADES_Platform
         else:
             # Invalid platform setting.  If you do implement a new
@@ -41,11 +41,13 @@ class ADES_Base:
                 "abstract": proc[2],
                 "keywords": proc[3],
                 "owsContextURL": proc[4],
-                "processVersion": proc[5],
-                "jobControlOptions": proc[6].split(','),
-                "outputTransmission": proc[7].split(','),
-                "immediateDeployment": str(bool(proc[8])).lower(),
-                "executionUnit": proc[9]}
+                "inputs": json.loads(proc[5]),
+                "outputs": json.loads(proc[6]),
+                "processVersion": proc[7],
+                "jobControlOptions": proc[8].split(','),
+                "outputTransmission": proc[9].split(','),
+                "immediateDeployment": str(bool(proc[9])).lower(),
+                "executionUnit": proc[10]}
     
     def get_procs(self):
         saved_procs = sqlite_get_procs()
@@ -53,8 +55,11 @@ class ADES_Base:
         return procs
     
     def get_proc(self, proc_id):
-        proc_desc = sqlite_get_proc(proc_id)
-        return self.proc_dict(proc_desc)
+        """
+        TODO: sqlite_get_proc vulnerable to sql injeciton through proc_id
+        """
+        saved_proc = sqlite_get_proc(proc_id)
+        return self.proc_dict(saved_proc)
     
     def deploy_proc(self, req_proc):
         """
@@ -72,7 +77,7 @@ class ADES_Base:
         proc_keywords = proc['keywords']
         proc_version = proc_desc['processVersion']
         job_control = proc_desc['jobControlOptions']
-        proc_desc_url = "{}/processes/{}".format(self.host, proc_id)
+        proc_desc_url = "{}/processes/{}".format(self.host, f"{proc_id}:{proc_version}")
 
         # creating response
         proc_summ = dict()
@@ -84,19 +89,25 @@ class ADES_Base:
         proc_summ['jobControlOptions'] = job_control
         proc_summ['processDescriptionURL'] = proc_desc_url
 
-        sqlite_deploy_proc(req_proc)
-        # ades_resp = self._ades.deploy_proc(proc_spec)
+        try:
+            self._ades.deploy_proc(req_proc)
+            sqlite_deploy_proc(req_proc)
+        except Exception as ex:
+            print(f"Failed to create ADES required files for process deployment. {ex.message}")
         return proc_summ
             
     def undeploy_proc(self, proc_id):
+        #self._ades.undeploy_proc(proc_id)
         proc_desc = self.proc_dict(sqlite_undeploy_proc(proc_id))
         print("proc_desc: ", proc_desc)
-        # ades_resp = self._ades.undeploy_proc(proc_desc)
         return proc_desc
 
     def get_jobs(self, proc_id=None):
-        jobs = sqlite_get_jobs(proc_id)
-        return jobs
+        # Removing sqlite query
+        # jobs = sqlite_get_jobs(proc_id)
+        # Query ADES
+        jobs_list = self._ades.get_jobs(proc_id)
+        return jobs_list
 
     def get_job(self, proc_id, job_id):
         # Required fields in job_info response dict:
@@ -107,19 +118,21 @@ class ADES_Base:
         #   estimatedCompletion (dateTime)
         #   nextPoll (dateTime)
         #   percentCompleted (int) in range [0, 100]
-        job_spec = sqlite_get_job(job_id)
+        # job_spec = sqlite_get_job(job_id)
         # if job was dismissed, then bypass querying the ADES backend
-        job_info = {"jobID": job_id, "status": job_spec["status"]}
-        if job_spec["status"] == "dismissed":
-            return job_info
-
+        # job_info = {"jobID": job_id, "status": job_spec["status"]}
+        # if job_spec["status"] == "dismissed":
+        #     return job_info
         # otherwise, query the ADES backend for the current status
-        # ades_resp = self._ades.get_job(job_spec)
-        # print(ades_resp)
-        # job_info["status"] = ades_resp["status"]
-        job_info = {"jobID": job_id, "status": job_spec["status"], "message": "Status of job {}".format(job_id)}
+        job_spec = dict()
+        job_spec["jobID"] = job_id
+        ades_resp = self._ades.get_job(job_spec)
+        print(ades_resp)
+        job_info = dict()
+        job_info["status"] = ades_resp["status"]
+        job_info = {"jobID": job_id, "status": job_info["status"], "message": "Status of job {}".format(job_id)}
         # and update the db with that status
-        # sqlite_update_job_status(job_id, job_info["status"])
+        #(job_id, job_info["status"])
         return job_info
 
     def exec_job(self, proc_id, job_inputs):
@@ -131,17 +144,17 @@ class ADES_Base:
         """
         now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")
         # TODO: this needs to be globally unique despite underlying processing cluster
-        job_id = f"{proc_id}-{hashlib.sha1((json.dumps(job_inputs, sort_keys=True) + now).encode()).hexdigest()}"
+        # job_id = f"{proc_id}-{hashlib.sha1((json.dumps(job_inputs, sort_keys=True) + now).encode()).hexdigest()}"
         job_spec = {
-            "process": self.get_proc(proc_id),
-            "inputs": job_inputs,
-            "job_id": job_id,
+            "proc_id": proc_id,
+            #"process": self.get_proc(proc_id),
+            "inputs": job_inputs
         }
-        # ades_resp = self._ades.exec_job(job_spec)
-        ades_resp = {} # mock
+        ades_resp = self._ades.exec_job(job_spec)
+        job_id = ades_resp.get("job_id")
         # ades_resp will return platform specific information that should be 
         # kept in the database with the job ID record
-        sqlite_exec_job(proc_id, job_id, job_inputs, ades_resp)
+        #sqlite_exec_job(proc_id, job_id, job_inputs, ades_resp)
         return {"code": 201, "location": "{}/processes/{}/jobs/{}".format(self.host, proc_id, job_id)}
             
     def dismiss_job(self, proc_id, job_id):
@@ -151,20 +164,31 @@ class ADES_Base:
         :param job_id:
         :return:
         """
-        job_spec = sqlite_dismiss_job(job_id)
-        # ades_resp = self._ades.dismiss_job(job_spec)
+        ades_resp = self._ades.dismiss_job(proc_id, job_id)
+        if ades_resp is None:
+            job_spec = sqlite_dismiss_job(job_id)
+        else:
+            job_spec = {"error": ades_resp}
         return job_spec
 
     def get_job_results(self, proc_id, job_id):
         # job_spec = self.get_job(proc_id, job_id)
-        # ades_resp = self._ades.get_job_results(job_spec)
+        products = self._ades.get_job_results(job_id=job_id)
         job_result = dict()
         outputs = list()
-        output = {
-                "mimeType": "image/tiff",
-                "href": "http://some-host/WPS/sample-ouput",
-                "id": "output"
+        for product in products:
+            id = product.get("id")
+            location = None
+            locations = product.get("browse_urls")
+            for loc in locations:
+                if loc.startswith("s3://"):
+                    location = loc
+            # create output blocks and append
+            output = {
+                "mimeType": "tbd",
+                "href": location,
+                "id": id
             }
-        outputs.append(output)
+            outputs.append(output)
         job_result["outputs"] = outputs
         return job_result

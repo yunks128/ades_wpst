@@ -1,0 +1,4 @@
+auth: false
+mozart_host: http://mozart:8888
+grq_host: http://grq2:8878
+username: hysdsops
