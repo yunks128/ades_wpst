@@ -1,10 +1,9 @@
-import sys
-import requests
 from flask import Response
 from jinja2 import Template
 import logging
 import json
-import hashlib
+from utils.job_publisher import SnsJobPublisher
+from utils.datatypes import Job, JobStatus
 from flask_ades_wpst.sqlite_connector import sqlite_get_procs, sqlite_get_proc, sqlite_deploy_proc, \
     sqlite_undeploy_proc, sqlite_get_jobs, sqlite_get_job, sqlite_exec_job, sqlite_dismiss_job, \
     sqlite_update_job_status
@@ -34,6 +33,7 @@ class ADES_Base:
             raise ValueError("Platform {} not implemented.".\
                              format(self._platform))
         self._ades = ADES_Platform()
+        self._job_publisher = SnsJobPublisher()
         
     def proc_dict(self, proc):
         return {"id": proc[0],
@@ -151,11 +151,12 @@ class ADES_Base:
             "inputs": job_inputs
         }
         ades_resp = self._ades.exec_job(job_spec)
-        job_id = ades_resp.get("job_id")
+        job = Job(id=ades_resp['id'], status=ades_resp['status'], inputs=job_inputs, outputs=[], tags={})
+        self._job_publisher.publish_job_change(job)
         # ades_resp will return platform specific information that should be 
         # kept in the database with the job ID record
         #sqlite_exec_job(proc_id, job_id, job_inputs, ades_resp)
-        return {"code": 201, "location": "{}/processes/{}/jobs/{}".format(self.host, proc_id, job_id)}
+        return {"code": 201, "location": "{}/processes/{}/jobs/{}".format(self.host, proc_id, job.id)}
             
     def dismiss_job(self, proc_id, job_id):
         """

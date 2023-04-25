@@ -359,7 +359,7 @@ class ADES_HYSDS(ADES_ABC):
             }
         except Exception as ex:
             error = ex
-            return {"job_id": hysds_job.job_id, "error": error}
+            return {"job_id": hysds_job.job_id, "status": "failed", "error": error}
 
     def dismiss_job(self, proc_id, job_id):
         # We can only dismiss jobs that were last in accepted or running state.
