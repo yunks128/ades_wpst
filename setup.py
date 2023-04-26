@@ -24,5 +24,7 @@ setup(
         "docker==6.0.0",
         "jsonschema==4.5.1",
         "GitPython==3.1.29",
+        "pydantic==1.10.7",
+        "boto3==1.26.118"
     ],
 )

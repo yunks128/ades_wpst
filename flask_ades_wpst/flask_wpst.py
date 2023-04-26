@@ -129,10 +129,12 @@ def processes_result(procID, jobID):
 def flask_wpst(app, debug=False, host="127.0.0.1",
                valid_platforms = ("Generic", "K8s", "PBS", "HYSDS")):
     platform = os.environ.get("ADES_PLATFORM", default="Generic")
+    job_notification_topic_name = os.environ.get("JOB_NOTIFICATION_TOPIC_NAME", default="unity-sps-job-status.fifo")
     if platform not in valid_platforms:
         raise ValueError("ADES_PLATFORM invalid - {} not in {}.".\
                          format(platform, valid_platforms))
     app.config["PLATFORM"] = platform
+    app.config["JOB_NOTIFICATION_TOPIC_NAME"] = job_notification_topic_name
     app.run(debug=debug, host=host)
 
 

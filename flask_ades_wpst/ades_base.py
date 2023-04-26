@@ -33,7 +33,7 @@ class ADES_Base:
             raise ValueError("Platform {} not implemented.".\
                              format(self._platform))
         self._ades = ADES_Platform()
-        self._job_publisher = SnsJobPublisher()
+        self._job_publisher = SnsJobPublisher(app_config["JOB_NOTIFICATION_TOPIC_NAME"])
         
     def proc_dict(self, proc):
         return {"id": proc[0],
@@ -135,7 +135,7 @@ class ADES_Base:
         #(job_id, job_info["status"])
         return job_info
 
-    def exec_job(self, proc_id, job_inputs):
+    def exec_job(self, proc_id, job_params):
         """
         Execute algorithm
         :param proc_id: algorithm identifier
@@ -148,10 +148,10 @@ class ADES_Base:
         job_spec = {
             "proc_id": proc_id,
             #"process": self.get_proc(proc_id),
-            "inputs": job_inputs
+            "inputs": job_params
         }
         ades_resp = self._ades.exec_job(job_spec)
-        job = Job(id=ades_resp['id'], status=ades_resp['status'], inputs=job_inputs, outputs=[], tags={})
+        job = Job(id=ades_resp['job_id'], status=ades_resp['status'], inputs=job_params["inputs"], outputs=[], tags={})
         self._job_publisher.publish_job_change(job)
         # ades_resp will return platform specific information that should be 
         # kept in the database with the job ID record
