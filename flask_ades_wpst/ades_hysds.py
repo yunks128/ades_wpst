@@ -23,6 +23,7 @@ hysds_to_ogc_status = {
     "job-queued": "accepted",
     "job-failed": "failed",
     "job-completed": "succeeded",
+    "job-revoked": "dismissed"
 }
 
 
@@ -350,7 +351,6 @@ class ADES_HYSDS(ADES_ABC):
     def dismiss_job(self, proc_id, job_id):
         # We can only dismiss jobs that were last in accepted or running state.
         # initialize job
-        error = None
         response = {
                 "job_id": None,
                 "status": None,
@@ -367,13 +367,14 @@ class ADES_HYSDS(ADES_ABC):
                 elif status == "job-queued":
                     # if status is queued then purge (remove) the job
                     job.remove()
-                response["job_id"] = job.job_id
-                response["status"] = job.get_status()
+                response["job_id"] = job_id
+                response["status"] = hysds_to_ogc_status.get("job-revoked")
 
             except Exception as ex:
-                #{"success": false, "message": "Failed to submit job. <class 'elasticsearch.exceptions.NotFoundError'>:NotFoundError(404, '{\"_index\":\"job_specs\",\"_type\":\"_doc\",\"_id\":\"job-lw-mozart-purge:v1.0.5\",\"found\":false}')", "result": null, "tags": null}
                 if "NotFoundError(404," in ex.get("message") :
                     response["error"] = "ADES Job Management Job Suite is not installed. So cannot Dismiss Job"
+                else:
+                    response["error"] = f"Failed to dismiss job. {ex}"
         else:
             response["error"] = f"Can not dismiss a job in state {hysds_to_ogc_status.get(status)}."
         return response
