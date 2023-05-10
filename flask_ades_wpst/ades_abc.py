@@ -4,6 +4,10 @@ from abc import ABCMeta, abstractmethod
 class ADES_ABC(metaclass=ABCMeta):
 
     @abstractmethod
+    def get_proc(self, proc_id):
+        raise NotImplementedError()
+
+    @abstractmethod
     def deploy_proc(self, proc_spec):
         raise NotImplementedError()
 

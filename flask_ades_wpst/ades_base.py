@@ -41,11 +41,13 @@ class ADES_Base:
                 "abstract": proc[2],
                 "keywords": proc[3],
                 "owsContextURL": proc[4],
-                "processVersion": proc[5],
-                "jobControlOptions": proc[6].split(','),
-                "outputTransmission": proc[7].split(','),
-                "immediateDeployment": str(bool(proc[8])).lower(),
-                "executionUnit": proc[9]}
+                "inputs": json.loads(proc[5]),
+                "outputs": json.loads(proc[6]),
+                "processVersion": proc[7],
+                "jobControlOptions": proc[8].split(','),
+                "outputTransmission": proc[9].split(','),
+                "immediateDeployment": str(bool(proc[9])).lower(),
+                "executionUnit": proc[10]}
     
     def get_procs(self):
         saved_procs = sqlite_get_procs()
@@ -53,8 +55,11 @@ class ADES_Base:
         return procs
     
     def get_proc(self, proc_id):
-        proc_desc = sqlite_get_proc(proc_id)
-        return self.proc_dict(proc_desc)
+        """
+        TODO: sqlite_get_proc vulnerable to sql injeciton through proc_id
+        """
+        saved_proc = sqlite_get_proc(proc_id)
+        return self.proc_dict(saved_proc)
     
     def deploy_proc(self, req_proc):
         """
