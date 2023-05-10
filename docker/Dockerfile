@@ -18,7 +18,8 @@ RUN git clone https://github.com/hysds/otello.git && \
 
 # RUN git clone -b MCP_TEST https://github.com/unity-sds/unity-sps-register_job.git
 # RUN git clone -b deploy-process https://github.com/drewm-jpl/unity-sps-register_job.git
-
+COPY requirements.txt ./requirements.txt
+RUN pip install -r requirements.txt
 WORKDIR /flask_ades_wpst
 COPY . /flask_ades_wpst
 # write otello config to ~/.config/otello/config.yml'?
