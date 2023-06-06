@@ -266,7 +266,13 @@ class ADES_HYSDS(ADES_ABC):
             cb.validate_hysds_ios()
             cb.validate_job_specs()
 
-            cb.build_image()
+            build_args = {
+                "STAGING_BUCKET": os.getenv("STAGING_BUCKET"),
+                "CLIENT_ID": os.getenv("CLIENT_ID"),
+                "DAPA_API": os.getenv("DAPA_API"),
+                "JOBS_DATA_SNS_TOPIC_ARN": os.getenv("JOBS_DATA_SNS_TOPIC_ARN"),
+            }
+            cb.build_image(build_args=build_args)
             image_url = cb.push_image()
 
             cb.publish_job_spec()
@@ -294,35 +300,39 @@ class ADES_HYSDS(ADES_ABC):
         return
 
     def undeploy_proc(self, proc_id):
-        get_jobspec_endpoint = os.path.join(
-            self._MOZART_REST_API, "job_spec/type"
-        )
-        remove_jobspec_endpoint = os.path.join(
-            self._MOZART_REST_API, "job_spec/remove"
-        )
+        get_jobspec_endpoint = os.path.join(self._MOZART_REST_API, "job_spec/type")
+        remove_jobspec_endpoint = os.path.join(self._MOZART_REST_API, "job_spec/remove")
         remove_container_endpoint = os.path.join(
             self._MOZART_REST_API, "container/remove"
         )
 
         try:
             print(f"Getting container id information for job type job-{proc_id}")
-            r = requests.get(get_jobspec_endpoint, params={"id": f"job-{proc_id}"}, verify=False)
+            r = requests.get(
+                get_jobspec_endpoint, params={"id": f"job-{proc_id}"}, verify=False
+            )
             response = r.json()
             if response.get("success"):
                 container_id = response.get("result").get("container")
                 print(f"Found container {container_id} for job type {proc_id}")
             else:
-                raise RuntimeError(f"Container information not found for job type {proc_id}. {r}")
+                raise RuntimeError(
+                    f"Container information not found for job type {proc_id}. {r}"
+                )
         except Exception as ex:
             raise Exception(ex)
         try:
             print(f"Deleting container {container_id}")
-            requests.get(remove_container_endpoint, params={"id": container_id}, verify=False)
+            requests.get(
+                remove_container_endpoint, params={"id": container_id}, verify=False
+            )
         except Exception as ex:
             raise Exception(f"Failed to delete container {container_id}. {ex}")
         try:
             print(f"Deleting jobspec for job-{proc_id}")
-            requests.get(remove_jobspec_endpoint, params={"id": f"job-{proc_id}"}, verify=False)
+            requests.get(
+                remove_jobspec_endpoint, params={"id": f"job-{proc_id}"}, verify=False
+            )
         except Exception as ex:
             raise Exception(f"Failed to delete jobspec job-{proc_id}. {ex}")
         return
