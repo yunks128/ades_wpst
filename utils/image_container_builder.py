@@ -88,7 +88,7 @@ class ContainerImageBuilder:
 
         return image_url
 
-    def build_image(self):
+    def build_image(self, build_args=None):
         """
         Builds the Docker image
         :param tag: str; example, hello_world:develop
@@ -104,6 +104,7 @@ class ContainerImageBuilder:
                 rm=True,
                 tag=self.image_name_tag,
                 decode=True,
+                buildargs=build_args,
             )
         ]
         _process_output(output)
