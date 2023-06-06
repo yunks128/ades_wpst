@@ -6,8 +6,9 @@ from flask_ades_wpst.ades_base import ADES_Base
 
 def parse_args():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("-H", "--host", default="127.0.0.1",
-                        help="host IP address for Flask server")
+    parser.add_argument(
+        "-H", "--host", default="127.0.0.1", help="host IP address for Flask server"
+    )
     args = parser.parse_args()
     return args.host
 
@@ -15,15 +16,15 @@ def parse_args():
 app = Flask(__name__)
 
 
-@app.route('/api/docs')
+@app.route("/api/docs")
 def get_docs():
-    print('sending docs')
-    return render_template('swaggerui.html')
+    print("sending docs")
+    return render_template("swaggerui.html")
 
 
 @app.route("/")
 def root():
-    print('sending root')
+    print("sending root")
     # resp_dict = {"landingPage": {"links": [
     #     {"href": "/", "type": "GET", "title": "getLandingPage"},
     #     {"href": "/processes", "type": "GET", "title": "getProcesses"},
@@ -42,35 +43,35 @@ def root():
     #      "title": "dismiss"},
     #     {"href": "/processes/<procID>/jobs/<jobID>/result", "type": "GET",
     #      "title": "getResult"}]}}
-    return render_template('index.html')
+    return render_template("index.html")
 
 
-@app.route("/processes", methods = ['GET', 'POST'])
+@app.route("/processes", methods=["GET", "POST"])
 def processes():
     resp_dict = {}
     status_code = 200
     ades_base = ADES_Base(app.config)
-    if request.method == 'GET':
+    if request.method == "GET":
         # Retrieve available processes
         # Get list of all available algorithms
         proc_list = ades_base.get_procs()
         resp_dict = {"processes": proc_list}
-    elif request.method == 'POST':
+    elif request.method == "POST":
         # Deploy a process
         # Register a new algorithm
         req_vals = request.get_json()
         proc_info = ades_base.deploy_proc(req_vals)
         resp_dict = {"deploymentResult": {"processSummary": proc_info}}
         status_code = 201
-    return resp_dict, status_code, {'ContentType':'application/json'}
+    return resp_dict, status_code, {"ContentType": "application/json"}
 
 
-@app.route("/processes/<procID>", methods = ['GET', 'DELETE'])
+@app.route("/processes/<procID>", methods=["GET", "DELETE"])
 def processes_id(procID):
     resp_dict = {}
     status_code = 200
     ades_base = ADES_Base(app.config)
-    if request.method == 'GET':
+    if request.method == "GET":
         # Retrieve a process description
         # Get a full description of the algorithm
         resp_dict = {"process": ades_base.get_proc(procID)}
@@ -78,63 +79,68 @@ def processes_id(procID):
         # Undeploy a process
         # Delete the algorithm
         resp_dict = {"undeploymentResult": ades_base.undeploy_proc(procID)}
-    return resp_dict, status_code, {'ContentType':'application/json'}
+    return resp_dict, status_code, {"ContentType": "application/json"}
 
 
-@app.route("/processes/<procID>/jobs", methods = ['GET', 'POST'])
+@app.route("/processes/<procID>/jobs", methods=["GET", "POST"])
 def processes_jobs(procID):
     ades_base = ADES_Base(app.config)
-    if request.method == 'GET':
+    if request.method == "GET":
         # Retrieve the list of jobs for a process
         # Get list of jobs for a specific algorithm type
         status_code = 200
         job_list = ades_base.get_jobs(procID)
         resp_dict = {"jobs": job_list}
-        return resp_dict, status_code, {'ContentType': 'application/json'}
-    elif request.method == 'POST':
+        return resp_dict, status_code, {"ContentType": "application/json"}
+    elif request.method == "POST":
         # Execute a process
         # Submit a job
         status_code = 201
         job_params = request.get_json()
         job_info = ades_base.exec_job(procID, job_params)
         header_dict = job_info
-        header_dict['ContentType'] = 'application/json'
+        header_dict["ContentType"] = "application/json"
         return {}, status_code, header_dict
 
 
-@app.route("/processes/<procID>/jobs/<jobID>", methods = ['GET', 'DELETE'])
+@app.route("/processes/<procID>/jobs/<jobID>", methods=["GET", "DELETE"])
 def processes_job(procID, jobID):
     status_code = 200
     ades_base = ADES_Base(app.config)
-    if request.method == 'GET':
+    if request.method == "GET":
         # Retrieve the status of a job
         resp_dict = ades_base.get_job(procID, jobID)
-    elif request.method == 'DELETE':
+    elif request.method == "DELETE":
         # Dismiss a job
         # Stop / Revoke a Job
         dismiss_status = ades_base.dismiss_job(procID, jobID)
         resp_dict = {"statusInfo": dismiss_status}
-    return resp_dict, status_code, {'ContentType':'application/json'}
+    return resp_dict, status_code, {"ContentType": "application/json"}
 
 
-@app.route("/processes/<procID>/jobs/<jobID>/result", methods = ['GET'])
+@app.route("/processes/<procID>/jobs/<jobID>/result", methods=["GET"])
 def processes_result(procID, jobID):
     # Get the result of the job
     status_code = 200
     ades_base = ADES_Base(app.config)
     resp_dict = ades_base.get_job_results(procID, jobID)
-    return resp_dict, status_code, {'ContentType':'application/json'}
+    return resp_dict, status_code, {"ContentType": "application/json"}
 
 
-def flask_wpst(app, debug=False, host="127.0.0.1",
-               valid_platforms = ("Generic", "K8s", "PBS", "HYSDS")):
+def flask_wpst(
+    app,
+    debug=False,
+    host="127.0.0.1",
+    valid_platforms=("Generic", "K8s", "PBS", "HYSDS"),
+):
     platform = os.environ.get("ADES_PLATFORM", default="Generic")
-    job_notification_topic_name = os.environ.get("JOB_NOTIFICATION_TOPIC_NAME", default="unity-sps-job-status.fifo")
+    jobs_data_sns_topic_arn = os.getenv("JOBS_DATA_SNS_TOPIC_ARN")
     if platform not in valid_platforms:
-        raise ValueError("ADES_PLATFORM invalid - {} not in {}.".\
-                         format(platform, valid_platforms))
+        raise ValueError(
+            "ADES_PLATFORM invalid - {} not in {}.".format(platform, valid_platforms)
+        )
     app.config["PLATFORM"] = platform
-    app.config["JOB_NOTIFICATION_TOPIC_NAME"] = job_notification_topic_name
+    app.config["JOBS_DATA_SNS_TOPIC_ARN"] = jobs_data_sns_topic_arn
     app.run(debug=debug, host=host)
 
 
