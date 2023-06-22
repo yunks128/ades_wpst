@@ -155,7 +155,7 @@ class ADES_Base:
         self._job_publisher.publish_job_change(job)
         # ades_resp will return platform specific information that should be 
         # kept in the database with the job ID record
-        #sqlite_exec_job(proc_id, job_id, job_inputs, ades_resp)
+        sqlite_exec_job(proc_id, job.id, job.inputs, ades_resp)
         return {"code": 201, "location": "{}/processes/{}/jobs/{}".format(self.host, proc_id, job.id)}
             
     def dismiss_job(self, proc_id, job_id):
@@ -166,10 +166,10 @@ class ADES_Base:
         :return:
         """
         ades_resp = self._ades.dismiss_job(proc_id, job_id)
-        if ades_resp is None:
+        if ades_resp.get("error") is None:
             job_spec = sqlite_dismiss_job(job_id)
         else:
-            job_spec = {"error": ades_resp}
+            job_spec = {"error": ades_resp.get("error")}
         return job_spec
 
     def get_job_results(self, proc_id, job_id):
