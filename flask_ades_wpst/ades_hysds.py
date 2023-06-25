@@ -23,6 +23,7 @@ hysds_to_ogc_status = {
     "job-queued": "accepted",
     "job-failed": "failed",
     "job-completed": "succeeded",
+    "job-revoked": "dismissed"
 }
 
 
@@ -369,25 +370,38 @@ class ADES_HYSDS(ADES_ABC):
             }
         except Exception as ex:
             error = ex
-            return {"job_id": hysds_job.job_id, "status": "failed", "error": error}
+            return {"job_id": hysds_job.job_id, "error": str(error)}
 
     def dismiss_job(self, proc_id, job_id):
         # We can only dismiss jobs that were last in accepted or running state.
         # initialize job
-        error = None
+        response = {
+                "job_id": None,
+                "status": None,
+                "error": None
+            }
         job = otello.Job(job_id=job_id)
         status = job.get_status()
         print("dismiss_job got start status: ", status)
         if status in ("job-started", "job-queued"):
             # if status is started then revoke the job
-            if status == "job-started":
-                job.revoke()
-            elif status == "job-queued":
-                # if status is queued then purge (remove) the job
-                job.remove()
+            try:
+                if status == "job-started":
+                    job.revoke()
+                elif status == "job-queued":
+                    # if status is queued then purge (remove) the job
+                    job.remove()
+                response["job_id"] = job_id
+                response["status"] = hysds_to_ogc_status.get("job-revoked")
+
+            except Exception as ex:
+                if "NotFoundError(404," in ex.get("message") :
+                    response["error"] = "ADES Job Management Job Suite is not installed. So cannot Dismiss Job"
+                else:
+                    response["error"] = f"Failed to dismiss job. {ex}"
         else:
-            error = f"Can not dismiss a job in {hysds_to_ogc_status.get(status)}."
-        return error
+            response["error"] = f"Can not dismiss a job in state {hysds_to_ogc_status.get(status)}."
+        return response
 
     def get_jobs(self, proc_id):
         jobs_result = list()
