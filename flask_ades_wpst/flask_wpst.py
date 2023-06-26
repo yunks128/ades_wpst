@@ -134,13 +134,13 @@ def flask_wpst(
     valid_platforms=("Generic", "K8s", "PBS", "HYSDS"),
 ):
     platform = os.environ.get("ADES_PLATFORM", default="Generic")
-    jobs_data_sns_topic_arn = os.getenv("JOBS_DATA_SNS_TOPIC_ARN")
+    job_notification_topic_arn = os.environ.get("JOBS_DATA_SNS_TOPIC_ARN")
     if platform not in valid_platforms:
         raise ValueError(
             "ADES_PLATFORM invalid - {} not in {}.".format(platform, valid_platforms)
         )
     app.config["PLATFORM"] = platform
-    app.config["JOBS_DATA_SNS_TOPIC_ARN"] = jobs_data_sns_topic_arn
+    app.config["JOB_NOTIFICATION_TOPIC_ARN"] = job_notification_topic_arn
     app.run(debug=debug, host=host)
 
 
