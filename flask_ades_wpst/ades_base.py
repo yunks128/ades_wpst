@@ -3,7 +3,7 @@ from jinja2 import Template
 import logging
 import json
 from utils.job_publisher import SnsJobPublisher
-from utils.datatypes import Job, JobStatus
+from utils.datatypes import Job
 from flask_ades_wpst.sqlite_connector import sqlite_get_procs, sqlite_get_proc, sqlite_deploy_proc, \
     sqlite_undeploy_proc, sqlite_get_jobs, sqlite_get_job, sqlite_exec_job, sqlite_dismiss_job, \
     sqlite_update_job_status
@@ -33,7 +33,7 @@ class ADES_Base:
             raise ValueError("Platform {} not implemented.".\
                              format(self._platform))
         self._ades = ADES_Platform()
-        self._job_publisher = SnsJobPublisher(app_config["JOB_NOTIFICATION_TOPIC_NAME"])
+        self._job_publisher = SnsJobPublisher(app_config["JOB_NOTIFICATION_TOPIC_ARN"])
         
     def proc_dict(self, proc):
         return {"id": proc[0],

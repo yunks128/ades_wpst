@@ -1,23 +1,25 @@
 from abc import ABCMeta, abstractmethod
-from utils.datatypes import Job, JobStatus
+from utils.datatypes import Job
 import boto3
 
 class JobPublisher(metaclass=ABCMeta):
 
     @abstractmethod
-    def publish_job_change(self, job: Job, status: JobStatus):
+    def publish_job_change(self, job: Job):
         raise NotImplementedError()
 
 class SnsJobPublisher(JobPublisher):
-    def __init__(self, topic_name: str):
-        self.topic_name = topic_name
+    def __init__(self, topic_arn: str):
+        self.topic_arn = topic_arn
         self.sts_client = boto3.client('sts', region_name='us-west-2')
-        self.topic_arn = f"arn:aws:sns:{self.sts_client.meta.region_name}:{self.sts_client.get_caller_identity()['Account']}:{self.topic_name}"
 
     def publish_job_change(self, job: Job):
         client = boto3.client('sns', region_name='us-west-2')
-        client.publish(
-            TopicArn=self.topic_arn,
-            Message=job.json(),
-            MessageGroupId="jobstatus"
-        )
+        try:
+            client.publish(
+                TopicArn=self.topic_arn,
+                Message=job.json(),
+                MessageGroupId=job.id
+            )
+        except Exception as e:
+            print(f"Failed to publish job {job.id} to {self.topic_arn}:\n {e}")
