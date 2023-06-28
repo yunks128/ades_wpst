@@ -12,6 +12,7 @@ from otello import Mozart
 import requests
 import time
 import traceback
+import backoff
 
 sys.path.append("..")
 
@@ -339,6 +340,10 @@ class ADES_HYSDS(ADES_ABC):
             raise Exception(f"Failed to delete jobspec job-{proc_id}. {ex}")
         return
 
+    @backoff.on_exception(backoff.expo, Exception, jitter=backoff.full_jitter, max_time=5) 
+    def _hysds_poll_job_status(self, hysds_job):
+        return hysds_job.get_status()
+
     def exec_job(self, job_spec):
         """
 
@@ -374,12 +379,10 @@ class ADES_HYSDS(ADES_ABC):
 
             print(f"Submitted job with id {hysds_job.job_id}")
 
-
             # Sleep for artificial latency to allow job to propagate through hysds
-            time.sleep(1)
             return {
                 "job_id": hysds_job.job_id,
-                "status": hysds_to_ogc_status[hysds_job.get_status()],
+                "status": hysds_to_ogc_status[self._hysds_poll_job_status(hysds_job)],
                 "inputs": params,
                 "error": None,
             }
