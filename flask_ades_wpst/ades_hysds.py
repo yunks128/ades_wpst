@@ -12,17 +12,20 @@ from otello import Mozart
 import requests
 import time
 import traceback
+import backoff
 
 sys.path.append("..")
 
 import utils.github_util as git
 from utils.image_container_builder import ContainerImageBuilder
+from utils.datatypes import Job
 
 hysds_to_ogc_status = {
     "job-started": "running",
     "job-queued": "accepted",
     "job-failed": "failed",
     "job-completed": "succeeded",
+    "job-revoked": "dismissed"
 }
 
 
@@ -266,7 +269,13 @@ class ADES_HYSDS(ADES_ABC):
             cb.validate_hysds_ios()
             cb.validate_job_specs()
 
-            cb.build_image()
+            build_args = {
+                "STAGING_BUCKET": os.getenv("STAGING_BUCKET"),
+                "CLIENT_ID": os.getenv("CLIENT_ID"),
+                "DAPA_API": os.getenv("DAPA_API"),
+                "JOBS_DATA_SNS_TOPIC_ARN": os.getenv("JOBS_DATA_SNS_TOPIC_ARN"),
+            }
+            cb.build_image(build_args=build_args)
             image_url = cb.push_image()
 
             cb.publish_job_spec()
@@ -294,38 +303,46 @@ class ADES_HYSDS(ADES_ABC):
         return
 
     def undeploy_proc(self, proc_id):
-        get_jobspec_endpoint = os.path.join(
-            self._MOZART_REST_API, "job_spec/type"
-        )
-        remove_jobspec_endpoint = os.path.join(
-            self._MOZART_REST_API, "job_spec/remove"
-        )
+        get_jobspec_endpoint = os.path.join(self._MOZART_REST_API, "job_spec/type")
+        remove_jobspec_endpoint = os.path.join(self._MOZART_REST_API, "job_spec/remove")
         remove_container_endpoint = os.path.join(
             self._MOZART_REST_API, "container/remove"
         )
 
         try:
             print(f"Getting container id information for job type job-{proc_id}")
-            r = requests.get(get_jobspec_endpoint, params={"id": f"job-{proc_id}"}, verify=False)
+            r = requests.get(
+                get_jobspec_endpoint, params={"id": f"job-{proc_id}"}, verify=False
+            )
             response = r.json()
             if response.get("success"):
                 container_id = response.get("result").get("container")
                 print(f"Found container {container_id} for job type {proc_id}")
             else:
-                raise RuntimeError(f"Container information not found for job type {proc_id}. {r}")
+                raise RuntimeError(
+                    f"Container information not found for job type {proc_id}. {r}"
+                )
         except Exception as ex:
             raise Exception(ex)
         try:
             print(f"Deleting container {container_id}")
-            requests.get(remove_container_endpoint, params={"id": container_id}, verify=False)
+            requests.get(
+                remove_container_endpoint, params={"id": container_id}, verify=False
+            )
         except Exception as ex:
             raise Exception(f"Failed to delete container {container_id}. {ex}")
         try:
             print(f"Deleting jobspec for job-{proc_id}")
-            requests.get(remove_jobspec_endpoint, params={"id": f"job-{proc_id}"}, verify=False)
+            requests.get(
+                remove_jobspec_endpoint, params={"id": f"job-{proc_id}"}, verify=False
+            )
         except Exception as ex:
             raise Exception(f"Failed to delete jobspec job-{proc_id}. {ex}")
         return
+
+    @backoff.on_exception(backoff.expo, Exception, jitter=backoff.full_jitter, max_time=5) 
+    def _hysds_poll_job_status(self, hysds_job):
+        return hysds_job.get_status()
 
     def exec_job(self, job_spec):
         """
@@ -349,35 +366,73 @@ class ADES_HYSDS(ADES_ABC):
         job.set_input_params(params=params)
         print("Submitting job of type job-{}\n Parameters: {}".format(proc_id, params))
         try:
+            # Publish job to JobPublisher passed in the job_spec
             hysds_job = job.submit_job(queue="verdi-job_worker", priority=0, tag="test")
+            job = Job(
+                id=hysds_job.job_id,
+                status="submitted",
+                inputs=params,
+                outputs=[],
+                tags={},
+            )
+            job_spec["job_publisher"].publish_job_change(job)
+
             print(f"Submitted job with id {hysds_job.job_id}")
-            time.sleep(2)
+
+            # Sleep for artificial latency to allow job to propagate through hysds
             return {
                 "job_id": hysds_job.job_id,
-                "status": hysds_job.get_status(),
+                "status": hysds_to_ogc_status[self._hysds_poll_job_status(hysds_job)],
+                "inputs": params,
                 "error": None,
             }
         except Exception as ex:
+            # Publish job to JobPublisher passed in the job_spec
+            try:
+                job = Job(
+                    id=hysds_job.id,
+                    status="failed",
+                    inputs=params,
+                    outputs=[],
+                    tags={},
+                )
+                job_spec["job_publisher"].publish_job_change(job)
+            except (AttributeError, UnboundLocalError) as e:
+                print("Failed to publish job, no hysds job id:\n{e}")
+
             error = ex
-            return {"job_id": hysds_job.job_id, "error": error}
+            return {"job_id": hysds_job.job_id, "status": "failed", "inputs": params, "error": str(error)}
 
     def dismiss_job(self, proc_id, job_id):
         # We can only dismiss jobs that were last in accepted or running state.
         # initialize job
-        error = None
+        response = {
+                "job_id": None,
+                "status": None,
+                "error": None
+            }
         job = otello.Job(job_id=job_id)
         status = job.get_status()
         print("dismiss_job got start status: ", status)
         if status in ("job-started", "job-queued"):
             # if status is started then revoke the job
-            if status == "job-started":
-                job.revoke()
-            elif status == "job-queued":
-                # if status is queued then purge (remove) the job
-                job.remove()
+            try:
+                if status == "job-started":
+                    job.revoke()
+                elif status == "job-queued":
+                    # if status is queued then purge (remove) the job
+                    job.remove()
+                response["job_id"] = job_id
+                response["status"] = hysds_to_ogc_status.get("job-revoked")
+
+            except Exception as ex:
+                if "NotFoundError(404," in ex.get("message") :
+                    response["error"] = "ADES Job Management Job Suite is not installed. So cannot Dismiss Job"
+                else:
+                    response["error"] = f"Failed to dismiss job. {ex}"
         else:
-            error = f"Can not dismiss a job in {hysds_to_ogc_status.get(status)}."
-        return error
+            response["error"] = f"Can not dismiss a job in state {hysds_to_ogc_status.get(status)}."
+        return response
 
     def get_jobs(self, proc_id):
         jobs_result = list()
