@@ -3,7 +3,6 @@ from jinja2 import Template
 import logging
 import json
 from utils.job_publisher import SnsJobPublisher
-from utils.datatypes import Job
 from flask_ades_wpst.sqlite_connector import (
     sqlite_get_procs,
     sqlite_get_proc,
@@ -160,24 +159,20 @@ class ADES_Base:
         now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")
         # TODO: this needs to be globally unique despite underlying processing cluster
         # job_id = f"{proc_id}-{hashlib.sha1((json.dumps(job_inputs, sort_keys=True) + now).encode()).hexdigest()}"
+
+        # TODO: relying on backend for job id means we need to pass the job publisher to backend impl code for submit notification
+        # job notifications should originate from this base layer once 
         job_spec = {
             "proc_id": proc_id,
             # "process": self.get_proc(proc_id),
             "inputs": job_params,
+            "job_publisher": self._job_publisher
         }
         ades_resp = self._ades.exec_job(job_spec)
-        job = Job(
-            id=ades_resp["job_id"],
-            status=ades_resp["status"],
-            inputs=job_params["inputs"],
-            outputs=[],
-            tags={},
-        )
-        self._job_publisher.publish_job_change(job)
         # ades_resp will return platform specific information that should be
         # kept in the database with the job ID record
-        sqlite_exec_job(proc_id, job.id, job.inputs, ades_resp)
-        return {"code": 201, "location": "{}/processes/{}/jobs/{}".format(self.host, proc_id, job.id)}
+        sqlite_exec_job(proc_id, ades_resp["job_id"], ades_resp["inputs"], ades_resp)
+        return {"code": 201, "location": "{}/processes/{}/jobs/{}".format(self.host, proc_id, ades_resp["job_id"])}
             
     def dismiss_job(self, proc_id, job_id):
         """

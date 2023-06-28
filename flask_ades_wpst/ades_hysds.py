@@ -17,6 +17,7 @@ sys.path.append("..")
 
 import utils.github_util as git
 from utils.image_container_builder import ContainerImageBuilder
+from utils.datatypes import Job
 
 hysds_to_ogc_status = {
     "job-started": "running",
@@ -360,17 +361,44 @@ class ADES_HYSDS(ADES_ABC):
         job.set_input_params(params=params)
         print("Submitting job of type job-{}\n Parameters: {}".format(proc_id, params))
         try:
+            # Publish job to JobPublisher passed in the job_spec
             hysds_job = job.submit_job(queue="verdi-job_worker", priority=0, tag="test")
+            job = Job(
+                id=hysds_job.job_id,
+                status="submitted",
+                inputs=params,
+                outputs=[],
+                tags={},
+            )
+            job_spec["job_publisher"].publish_job_change(job)
+
             print(f"Submitted job with id {hysds_job.job_id}")
-            time.sleep(2)
+
+
+            # Sleep for artificial latency to allow job to propagate through hysds
+            time.sleep(1)
             return {
                 "job_id": hysds_job.job_id,
-                "status": hysds_job.get_status(),
+                "status": hysds_to_ogc_status[hysds_job.get_status()],
+                "inputs": params,
                 "error": None,
             }
         except Exception as ex:
+            # Publish job to JobPublisher passed in the job_spec
+            try:
+                job = Job(
+                    id=hysds_job.id,
+                    status="failed",
+                    inputs=params,
+                    outputs=[],
+                    tags={},
+                )
+                job_spec["job_publisher"].publish_job_change(job)
+            except (AttributeError, UnboundLocalError) as e:
+                print("Failed to publish job, no hysds job id:\n{e}")
+
             error = ex
-            return {"job_id": hysds_job.job_id, "status": "failed", "error": str(error)}
+            return {"job_id": hysds_job.job_id, "status": "failed", "inputs": params, "error": str(error)}
 
     def dismiss_job(self, proc_id, job_id):
         # We can only dismiss jobs that were last in accepted or running state.

@@ -5,6 +5,6 @@ from enum import Enum
 class Job(BaseModel):
     id: str
     status: str
-    inputs: List[dict]
-    outputs: List[dict]
+    inputs: dict
+    outputs: dict
     tags: dict
