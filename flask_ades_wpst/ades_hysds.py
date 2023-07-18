@@ -364,6 +364,11 @@ class ADES_HYSDS(ADES_ABC):
             for input in job_spec.get("inputs").get("inputs"):
                 params[input["id"]] = input["data"]
         job.set_input_params(params=params)
+
+        if "labels" in job_spec["inputs"]:
+            labels = job_spec["inputs"]["labels"]
+        else:
+            labels = []
         print("Submitting job of type job-{}\n Parameters: {}".format(proc_id, params))
         try:
             # Publish job to JobPublisher passed in the job_spec
@@ -373,7 +378,7 @@ class ADES_HYSDS(ADES_ABC):
                 status="submitted",
                 inputs=params,
                 outputs=[],
-                tags={},
+                labels=labels,
             )
             job_spec["job_publisher"].publish_job_change(job)
 
@@ -394,7 +399,7 @@ class ADES_HYSDS(ADES_ABC):
                     status="failed",
                     inputs=params,
                     outputs=[],
-                    tags={},
+                    labels=labels,
                 )
                 job_spec["job_publisher"].publish_job_change(job)
             except (AttributeError, UnboundLocalError) as e:
