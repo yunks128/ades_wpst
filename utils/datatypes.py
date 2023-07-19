@@ -7,4 +7,4 @@ class Job(BaseModel):
     status: str
     inputs: dict
     outputs: dict
-    tags: dict
+    labels: List[str]

@@ -10,7 +10,6 @@ from flask_ades_wpst.ades_abc import ADES_ABC
 import otello
 from otello import Mozart
 import requests
-import time
 import traceback
 import backoff
 
@@ -364,7 +363,14 @@ class ADES_HYSDS(ADES_ABC):
             for input in job_spec.get("inputs").get("inputs"):
                 params[input["id"]] = input["data"]
         job.set_input_params(params=params)
+
+        if "labels" in job_spec["inputs"]:
+            labels = job_spec["inputs"]["labels"]
+        else:
+            labels = []
+
         print("Submitting job of type job-{}\n Parameters: {}".format(proc_id, params))
+
         try:
             # Publish job to JobPublisher passed in the job_spec
             hysds_job = job.submit_job(queue="verdi-job_worker", priority=0, tag="test")
@@ -372,9 +378,10 @@ class ADES_HYSDS(ADES_ABC):
                 id=hysds_job.job_id,
                 status="submitted",
                 inputs=params,
-                outputs=[],
-                tags={},
+                outputs={},
+                labels=labels,
             )
+
             job_spec["job_publisher"].publish_job_change(job)
 
             print(f"Submitted job with id {hysds_job.job_id}")
@@ -393,12 +400,12 @@ class ADES_HYSDS(ADES_ABC):
                     id=hysds_job.id,
                     status="failed",
                     inputs=params,
-                    outputs=[],
-                    tags={},
+                    outputs={},
+                    labels=labels,
                 )
                 job_spec["job_publisher"].publish_job_change(job)
             except (AttributeError, UnboundLocalError) as e:
-                print("Failed to publish job, no hysds job id:\n{e}")
+                print(f"Failed to publish job, no hysds job id:\n{e}")
 
             error = ex
             return {"job_id": hysds_job.job_id, "status": "failed", "inputs": params, "error": str(error)}
