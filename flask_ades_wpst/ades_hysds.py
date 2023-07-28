@@ -92,6 +92,7 @@ class ADES_HYSDS(ADES_ABC):
         imported_worker_files = {
             "/static-data": ["/static-data", "rw"],
             "/tmp": ["/tmp", "rw"],
+            "/stage": ["/stage", "rw"]
         }
         params = list()
 
