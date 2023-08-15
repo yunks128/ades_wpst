@@ -340,7 +340,7 @@ class ADES_HYSDS(ADES_ABC):
             raise Exception(f"Failed to delete jobspec job-{proc_id}. {ex}")
         return
 
-    @backoff.on_exception(backoff.expo, Exception, jitter=backoff.full_jitter, max_time=5) 
+    @backoff.on_exception(backoff.expo, Exception, jitter=backoff.full_jitter, max_time=10) 
     def _hysds_poll_job_status(self, hysds_job):
         return hysds_job.get_status()
 
@@ -398,7 +398,7 @@ class ADES_HYSDS(ADES_ABC):
             # Publish job to JobPublisher passed in the job_spec
             try:
                 job = Job(
-                    id=hysds_job.id,
+                    id=hysds_job.job_id,
                     status="failed",
                     inputs=params,
                     outputs={},
