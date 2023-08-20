@@ -4,6 +4,7 @@ from flask import Response
 from jinja2 import Template
 import logging
 import json
+import boto3
 import hashlib
 from flask_ades_wpst.sqlite_connector import sqlite_get_procs, sqlite_get_proc, sqlite_deploy_proc, \
     sqlite_undeploy_proc, sqlite_get_jobs, sqlite_get_job, sqlite_exec_job, sqlite_dismiss_job, \
@@ -34,6 +35,47 @@ class ADES_Base:
             raise ValueError("Platform {} not implemented.".\
                              format(self._platform))
         self._ades = ADES_Platform()
+
+    def get_sts_and_sns_clients(aws_auth_method):
+        if aws_auth_method == "keys":
+            sts_client = boto3.client(
+                "sts",
+                region_name="us-west-2",
+                aws_access_key_id=os.getenv("ACCESS_KEY"),
+                aws_secret_access_key=os.getenv("SECRET_KEY"),
+                aws_session_token=os.getenv("SESSION_TOKEN"),
+            )
+            print(sts_client.get_caller_identity())
+            client = boto3.client(
+                "sns",
+                region_name="us-west-2",
+                aws_access_key_id=os.getenv("ACCESS_KEY"),
+                aws_secret_access_key=os.getenv("SECRET_KEY"),
+                aws_session_token=os.getenv("SESSION_TOKEN"),
+            )
+
+        elif aws_auth_method == "iam":
+            sts_client = boto3.client("sts", region_name="us-west-2")
+            print(sts_client.get_caller_identity())
+            client = boto3.client("sns", region_name="us-west-2")
+
+        else:
+            print(f"Invalid aws_auth_method: {aws_auth_method}")
+            print(f"Supported methods: iam, keys")
+            exit()
+
+        return sts_client, client
+
+    def _update_jobs_database(self, job_id, proc_id, job_inputs={}, job_tags=[]):
+        sts_client, sns_client = self.get_sts_and_sns_clients(aws_auth_method)
+        job_data = {"id": job_id, "process": proc_id, "status": "Accepted", "inputs": job_inputs, "tags": job_tags}
+
+        print(
+            sns_client.publish(
+                TopicArn=topic_arn, Message=json.dumps(job_data), MessageGroupId=job_id
+            )
+        )
+
         
     def proc_dict(self, proc):
         return {"id": proc[0],
@@ -152,6 +194,8 @@ class ADES_Base:
         }
         ades_resp = self._ades.exec_job(job_spec)
         job_id = ades_resp.get("job_id")
+        # Update jobs database
+        self._update_jobs_database(job_id, proc_id, job_inputs)
         # ades_resp will return platform specific information that should be 
         # kept in the database with the job ID record
         sqlite_exec_job(proc_id, job_id, job_inputs, ades_resp)
