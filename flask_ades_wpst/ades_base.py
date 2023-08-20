@@ -76,6 +76,30 @@ class ADES_Base:
             )
         )
 
+    def _get_jobs_doc(self, job_id):
+        """
+        This function retrieves the ES document for a given job ID from the Jobs DB
+        :param job_id:
+        :return:
+        """
+        # Create an Elasticsearch client
+        es_client = boto3.client('es')
+        # TODO: Get Elasticsearch domain name and index name
+        domain_name = ''
+        index_name = ""
+        document_id = job_id
+
+        # Query the document
+        try:
+            response = es_client.get_source(index=index_name, id=document_id, DomainName=domain_name)
+            document = json.loads(response.get('Body').read().decode('utf-8'))
+            print(f"Retrieved Document: {json.dumps(document, indent=4)}")
+            return document
+        except es_client.exceptions.ResourceNotFoundException as e:
+            raise RuntimeError("Document not found:", e)
+        except Exception as e:
+            raise RuntimeError("An error occurred:", e)
+
         
     def proc_dict(self, proc):
         return {"id": proc[0],
@@ -216,23 +240,24 @@ class ADES_Base:
         return job_spec
 
     def get_job_results(self, proc_id, job_id):
-        # job_spec = self.get_job(proc_id, job_id)
-        products = self._ades.get_job_results(job_id=job_id)
+        job_doc = self._get_jobs_doc(job_id=job_id)
         job_result = dict()
         outputs = list()
-        for product in products:
-            id = product.get("id")
-            location = None
-            locations = product.get("browse_urls")
-            for loc in locations:
-                if loc.startswith("s3://"):
-                    location = loc
-            # create output blocks and append
-            output = {
-                "mimeType": "tbd",
-                "href": location,
-                "id": id
-            }
-            outputs.append(output)
+        #TODO: Add verification to check if job_id corresponds to a job of process type - proc_id
+        if "outputs" in job_doc:
+            job_outputs = job_doc.get["outputs"]
+            print(f"Retrieved Output Field: {json.dumps(outputs)}")
+            for product in job_outputs:
+                prod_id = product
+                prod_location = job_outputs.get(product).get("location")
+                file_type = job_outputs.get(product).get("class")
+                output = {
+                    "mimeType": file_type,
+                    "href": prod_location,
+                    "id": prod_id
+                }
+                outputs.append(output)
+        else:
+            print("Output field not found in the document.")
         job_result["outputs"] = outputs
         return job_result
