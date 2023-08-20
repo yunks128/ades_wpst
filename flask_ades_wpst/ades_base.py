@@ -67,9 +67,9 @@ class ADES_Base:
         return sts_client, client
 
     def _update_jobs_database(self, job_id, proc_id, job_inputs={}, job_tags=[]):
-        sts_client, sns_client = self.get_sts_and_sns_clients(aws_auth_method)
+        sts_client, sns_client = self.get_sts_and_sns_clients(aws_auth_method="iam")
         job_data = {"id": job_id, "process": proc_id, "status": "Accepted", "inputs": job_inputs, "tags": job_tags}
-
+        # TOOD: Figure out how to get topic_arn
         print(
             sns_client.publish(
                 TopicArn=topic_arn, Message=json.dumps(job_data), MessageGroupId=job_id
