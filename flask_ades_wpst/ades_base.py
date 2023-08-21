@@ -1,11 +1,8 @@
-import sys
-import requests
-from flask import Response
-from jinja2 import Template
+import os
+from elasticsearch import Elasticsearch
 import logging
 import json
 import boto3
-import hashlib
 from flask_ades_wpst.sqlite_connector import sqlite_get_procs, sqlite_get_proc, sqlite_deploy_proc, \
     sqlite_undeploy_proc, sqlite_get_jobs, sqlite_get_job, sqlite_exec_job, sqlite_dismiss_job, \
     sqlite_update_job_status
@@ -69,7 +66,7 @@ class ADES_Base:
     def _update_jobs_database(self, job_id, proc_id, job_inputs={}, job_tags=[]):
         sts_client, sns_client = self.get_sts_and_sns_clients(aws_auth_method="iam")
         job_data = {"id": job_id, "process": proc_id, "status": "Accepted", "inputs": job_inputs, "tags": job_tags}
-        # TOOD: Figure out how to get topic_arn
+        topic_arn = os.environ["JOBS_DATA_SNS_TOPIC_ARN"]
         print(
             sns_client.publish(
                 TopicArn=topic_arn, Message=json.dumps(job_data), MessageGroupId=job_id
@@ -83,22 +80,20 @@ class ADES_Base:
         :return:
         """
         # Create an Elasticsearch client
-        es_client = boto3.client('es')
-        # TODO: Get Elasticsearch domain name and index name
-        domain_name = ''
+        # Initialize the Elasticsearch client
+        # TODO: Change to use environment variables
+        es = Elasticsearch([{'host': os.environ["ES_URL"], 'port': 9200}])
         index_name = ""
         document_id = job_id
 
         # Query the document
         try:
-            response = es_client.get_source(index=index_name, id=document_id, DomainName=domain_name)
-            document = json.loads(response.get('Body').read().decode('utf-8'))
-            print(f"Retrieved Document: {json.dumps(document, indent=4)}")
+            result = es.get(index=index_name, id=document_id)
+            document = result.get('_source', {})
+            print(f"Retrieved Document:\n {document}")
             return document
-        except es_client.exceptions.ResourceNotFoundException as e:
-            raise RuntimeError("Document not found:", e)
         except Exception as e:
-            raise RuntimeError("An error occurred:", e)
+            print("An error occurred:", e)
 
         
     def proc_dict(self, proc):
