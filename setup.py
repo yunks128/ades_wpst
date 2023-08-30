@@ -16,7 +16,8 @@ setup(
     },
     install_requires=[
         "Flask==2.0.2",
-        "requests==2.26.0",
+        "requests==2.29.0",
+        "urllib3==1.26.15",
         "pyyaml==5.4.1",
         "kubernetes==19.15.0",
         "cwltool==3.1.20211107152837",
@@ -24,5 +25,7 @@ setup(
         "docker==6.0.0",
         "jsonschema==4.5.1",
         "GitPython==3.1.29",
+        "pydantic==1.10.7",
+        "boto3==1.26.118",
     ],
 )

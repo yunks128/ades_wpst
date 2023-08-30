@@ -1,17 +1,28 @@
 import os
 from elasticsearch import Elasticsearch
+import boto3
+from flask import Response
+from jinja2 import Template
 import logging
 import json
-import boto3
-from flask_ades_wpst.sqlite_connector import sqlite_get_procs, sqlite_get_proc, sqlite_deploy_proc, \
-    sqlite_undeploy_proc, sqlite_get_jobs, sqlite_get_job, sqlite_exec_job, sqlite_dismiss_job, \
-    sqlite_update_job_status
+from utils.job_publisher import SnsJobPublisher
+from flask_ades_wpst.sqlite_connector import (
+    sqlite_get_procs,
+    sqlite_get_proc,
+    sqlite_deploy_proc,
+    sqlite_undeploy_proc,
+    sqlite_get_jobs,
+    sqlite_get_job,
+    sqlite_exec_job,
+    sqlite_dismiss_job,
+    sqlite_update_job_status,
+)
 from datetime import datetime
 
 log = logging.getLogger(__name__)
 
-class ADES_Base:
 
+class ADES_Base:
     def __init__(self, app_config):
         self.host = "http://127.0.0.1:5000"
         self._app_config = app_config
@@ -29,8 +40,7 @@ class ADES_Base:
             # platform here, you must also add it to the valid_platforms
             # tuple default argument to the flask_wpst function in
             # flask_wpst.py.
-            raise ValueError("Platform {} not implemented.".\
-                             format(self._platform))
+            raise ValueError("Platform {} not implemented.".format(self._platform))
         self._ades = ADES_Platform()
 
     def get_sts_and_sns_clients(aws_auth_method):
@@ -63,9 +73,9 @@ class ADES_Base:
 
         return sts_client, client
 
-    def _update_jobs_database(self, job_id, proc_id, job_inputs={}, job_tags=[]):
+    def _update_jobs_database(self, job_id, proc_id, status, job_inputs={}, job_tags=[]):
         sts_client, sns_client = self.get_sts_and_sns_clients(aws_auth_method="iam")
-        job_data = {"id": job_id, "process": proc_id, "status": "Accepted", "inputs": job_inputs, "tags": job_tags}
+        job_data = {"id": job_id, "process": proc_id, "status": status, "inputs": job_inputs, "tags": job_tags}
         topic_arn = os.environ["JOBS_DATA_SNS_TOPIC_ARN"]
         print(
             sns_client.publish(
@@ -97,31 +107,33 @@ class ADES_Base:
 
         
     def proc_dict(self, proc):
-        return {"id": proc[0],
-                "title": proc[1],
-                "abstract": proc[2],
-                "keywords": proc[3],
-                "owsContextURL": proc[4],
-                "inputs": json.loads(proc[5]),
-                "outputs": json.loads(proc[6]),
-                "processVersion": proc[7],
-                "jobControlOptions": proc[8].split(','),
-                "outputTransmission": proc[9].split(','),
-                "immediateDeployment": str(bool(proc[9])).lower(),
-                "executionUnit": proc[10]}
-    
+        return {
+            "id": proc[0],
+            "title": proc[1],
+            "abstract": proc[2],
+            "keywords": proc[3],
+            "owsContextURL": proc[4],
+            "inputs": json.loads(proc[5]),
+            "outputs": json.loads(proc[6]),
+            "processVersion": proc[7],
+            "jobControlOptions": proc[8].split(","),
+            "outputTransmission": proc[9].split(","),
+            "immediateDeployment": str(bool(proc[9])).lower(),
+            "executionUnit": proc[10],
+        }
+
     def get_procs(self):
         saved_procs = sqlite_get_procs()
         procs = [self.proc_dict(saved_proc) for saved_proc in saved_procs]
         return procs
-    
+
     def get_proc(self, proc_id):
         """
         TODO: sqlite_get_proc vulnerable to sql injeciton through proc_id
         """
         saved_proc = sqlite_get_proc(proc_id)
         return self.proc_dict(saved_proc)
-    
+
     def deploy_proc(self, req_proc):
         """
         DONE
@@ -131,34 +143,36 @@ class ADES_Base:
         print(req_proc)
         proc_desc = req_proc["processDescription"]
         proc = proc_desc["process"]
-        proc_id = proc['id']
+        proc_id = proc["id"]
         # proc_id = f"{proc['id']}-{proc_desc['processVersion']}"
-        proc_title = proc['title']
-        proc_abstract = proc['abstract']
-        proc_keywords = proc['keywords']
-        proc_version = proc_desc['processVersion']
-        job_control = proc_desc['jobControlOptions']
+        proc_title = proc["title"]
+        proc_abstract = proc["abstract"]
+        proc_keywords = proc["keywords"]
+        proc_version = proc_desc["processVersion"]
+        job_control = proc_desc["jobControlOptions"]
         proc_desc_url = "{}/processes/{}".format(self.host, f"{proc_id}:{proc_version}")
 
         # creating response
         proc_summ = dict()
-        proc_summ['id'] = proc_id
-        proc_summ['title'] = proc_title
-        proc_summ['abstract'] = proc_abstract
-        proc_summ['keywords'] = proc_keywords
-        proc_summ['version'] = proc_version
-        proc_summ['jobControlOptions'] = job_control
-        proc_summ['processDescriptionURL'] = proc_desc_url
+        proc_summ["id"] = proc_id
+        proc_summ["title"] = proc_title
+        proc_summ["abstract"] = proc_abstract
+        proc_summ["keywords"] = proc_keywords
+        proc_summ["version"] = proc_version
+        proc_summ["jobControlOptions"] = job_control
+        proc_summ["processDescriptionURL"] = proc_desc_url
 
         try:
             self._ades.deploy_proc(req_proc)
             sqlite_deploy_proc(req_proc)
         except Exception as ex:
-            print(f"Failed to create ADES required files for process deployment. {ex.message}")
+            print(
+                f"Failed to create ADES required files for process deployment. {ex.message}"
+            )
         return proc_summ
-            
+
     def undeploy_proc(self, proc_id):
-        #self._ades.undeploy_proc(proc_id)
+        # self._ades.undeploy_proc(proc_id)
         proc_desc = self.proc_dict(sqlite_undeploy_proc(proc_id))
         print("proc_desc: ", proc_desc)
         return proc_desc
@@ -191,12 +205,16 @@ class ADES_Base:
         print(ades_resp)
         job_info = dict()
         job_info["status"] = ades_resp["status"]
-        job_info = {"jobID": job_id, "status": job_info["status"], "message": "Status of job {}".format(job_id)}
+        job_info = {
+            "jobID": job_id,
+            "status": job_info["status"],
+            "message": "Status of job {}".format(job_id),
+        }
         # and update the db with that status
-        #(job_id, job_info["status"])
+        # (job_id, job_info["status"])
         return job_info
 
-    def exec_job(self, proc_id, job_inputs):
+    def exec_job(self, proc_id, job_params):
         """
         Execute algorithm
         :param proc_id: algorithm identifier
@@ -206,19 +224,25 @@ class ADES_Base:
         now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")
         # TODO: this needs to be globally unique despite underlying processing cluster
         # job_id = f"{proc_id}-{hashlib.sha1((json.dumps(job_inputs, sort_keys=True) + now).encode()).hexdigest()}"
+
+        # TODO: relying on backend for job id means we need to pass the job publisher to backend impl code for submit notification
+        # job notifications should originate from this base layer once 
         job_spec = {
             "proc_id": proc_id,
-            #"process": self.get_proc(proc_id),
-            "inputs": job_inputs
+            # "process": self.get_proc(proc_id),
+            "inputs": job_params,
+            "job_publisher": self._job_publisher
         }
         ades_resp = self._ades.exec_job(job_spec)
         job_id = ades_resp.get("job_id")
+        inputs = ades_resp.get("inputs")
+        job_status = ades_resp.get("status")
         # Update jobs database
-        self._update_jobs_database(job_id, proc_id, job_inputs)
+        self._update_jobs_database(job_id, proc_id, job_status, inputs)
         # ades_resp will return platform specific information that should be 
         # kept in the database with the job ID record
-        sqlite_exec_job(proc_id, job_id, job_inputs, ades_resp)
-        return {"code": 201, "location": "{}/processes/{}/jobs/{}".format(self.host, proc_id, job_id)}
+        sqlite_exec_job(proc_id, job_id, inputs, ades_resp)
+        return {"code": 201, "location": "{}/processes/{}/jobs/{}".format(self.host, proc_id, ades_resp["job_id"])}
             
     def dismiss_job(self, proc_id, job_id):
         """

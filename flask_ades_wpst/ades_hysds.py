@@ -10,13 +10,14 @@ from flask_ades_wpst.ades_abc import ADES_ABC
 import otello
 from otello import Mozart
 import requests
-import time
 import traceback
+import backoff
 
 sys.path.append("..")
 
 import utils.github_util as git
 from utils.image_container_builder import ContainerImageBuilder
+from utils.datatypes import Job
 
 hysds_to_ogc_status = {
     "job-started": "running",
@@ -57,12 +58,13 @@ class ADES_HYSDS(ADES_ABC):
         """
         command = f"{cwl_wfl}"
         recommended_queues = ["verdi-job_worker"]
-        disk_usage = "200MB"
-        soft_time_limit = 900
-        time_limit = 960
+        disk_usage = "500MB"
+        soft_time_limit = 86400
+        time_limit = 86460
         imported_worker_files = {
             "/static-data": ["/static-data", "rw"],
             "/tmp": ["/tmp", "rw"],
+            "/stage": ["/stage", "rw"]
         }
         params = list()
 
@@ -239,7 +241,13 @@ class ADES_HYSDS(ADES_ABC):
             cb.validate_hysds_ios()
             cb.validate_job_specs()
 
-            cb.build_image()
+            build_args = {
+                "STAGING_BUCKET": os.getenv("STAGING_BUCKET"),
+                "CLIENT_ID": os.getenv("CLIENT_ID"),
+                "DAPA_API": os.getenv("DAPA_API"),
+                "JOBS_DATA_SNS_TOPIC_ARN": os.getenv("JOBS_DATA_SNS_TOPIC_ARN"),
+            }
+            cb.build_image(build_args=build_args)
             image_url = cb.push_image()
 
             cb.publish_job_spec()
@@ -267,38 +275,46 @@ class ADES_HYSDS(ADES_ABC):
         return
 
     def undeploy_proc(self, proc_id):
-        get_jobspec_endpoint = os.path.join(
-            self._MOZART_REST_API, "job_spec/type"
-        )
-        remove_jobspec_endpoint = os.path.join(
-            self._MOZART_REST_API, "job_spec/remove"
-        )
+        get_jobspec_endpoint = os.path.join(self._MOZART_REST_API, "job_spec/type")
+        remove_jobspec_endpoint = os.path.join(self._MOZART_REST_API, "job_spec/remove")
         remove_container_endpoint = os.path.join(
             self._MOZART_REST_API, "container/remove"
         )
 
         try:
             print(f"Getting container id information for job type job-{proc_id}")
-            r = requests.get(get_jobspec_endpoint, params={"id": f"job-{proc_id}"}, verify=False)
+            r = requests.get(
+                get_jobspec_endpoint, params={"id": f"job-{proc_id}"}, verify=False
+            )
             response = r.json()
             if response.get("success"):
                 container_id = response.get("result").get("container")
                 print(f"Found container {container_id} for job type {proc_id}")
             else:
-                raise RuntimeError(f"Container information not found for job type {proc_id}. {r}")
+                raise RuntimeError(
+                    f"Container information not found for job type {proc_id}. {r}"
+                )
         except Exception as ex:
             raise Exception(ex)
         try:
             print(f"Deleting container {container_id}")
-            requests.get(remove_container_endpoint, params={"id": container_id}, verify=False)
+            requests.get(
+                remove_container_endpoint, params={"id": container_id}, verify=False
+            )
         except Exception as ex:
             raise Exception(f"Failed to delete container {container_id}. {ex}")
         try:
             print(f"Deleting jobspec for job-{proc_id}")
-            requests.get(remove_jobspec_endpoint, params={"id": f"job-{proc_id}"}, verify=False)
+            requests.get(
+                remove_jobspec_endpoint, params={"id": f"job-{proc_id}"}, verify=False
+            )
         except Exception as ex:
             raise Exception(f"Failed to delete jobspec job-{proc_id}. {ex}")
         return
+
+    @backoff.on_exception(backoff.expo, Exception, jitter=backoff.full_jitter, max_time=10) 
+    def _hysds_poll_job_status(self, hysds_job):
+        return hysds_job.get_status()
 
     def exec_job(self, job_spec):
         """
@@ -320,19 +336,30 @@ class ADES_HYSDS(ADES_ABC):
             for input in job_spec.get("inputs").get("inputs"):
                 params[input["id"]] = input["data"]
         job.set_input_params(params=params)
+
+        if "labels" in job_spec["inputs"]:
+            labels = job_spec["inputs"]["labels"]
+        else:
+            labels = []
+
         print("Submitting job of type job-{}\n Parameters: {}".format(proc_id, params))
+
         try:
+            # Publish job to JobPublisher passed in the job_spec
             hysds_job = job.submit_job(queue="verdi-job_worker", priority=0, tag="test")
+
             print(f"Submitted job with id {hysds_job.job_id}")
-            time.sleep(2)
+
+            # Sleep for artificial latency to allow job to propagate through hysds
             return {
                 "job_id": hysds_job.job_id,
-                "status": hysds_job.get_status(),
+                "status": hysds_to_ogc_status[self._hysds_poll_job_status(hysds_job)],
+                "inputs": params,
                 "error": None,
             }
         except Exception as ex:
             error = str(ex)
-            return {"job_id": hysds_job.job_id, "error": error}
+            return {"job_id": hysds_job.job_id, "status": "failed", "inputs": params, "error": error}
 
     def dismiss_job(self, proc_id, job_id):
         # We can only dismiss jobs that were last in accepted or running state.
