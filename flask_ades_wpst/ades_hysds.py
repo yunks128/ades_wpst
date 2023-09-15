@@ -270,10 +270,10 @@ class ADES_HYSDS(ADES_ABC):
             cb.validate_job_specs()
 
             build_args = {
-                "STAGING_BUCKET": os.getenv("STAGING_BUCKET"),
-                "CLIENT_ID": os.getenv("CLIENT_ID"),
-                "DAPA_API": os.getenv("DAPA_API"),
-                "JOBS_DATA_SNS_TOPIC_ARN": os.getenv("JOBS_DATA_SNS_TOPIC_ARN"),
+                "STAGING_BUCKET": "",
+                "CLIENT_ID": "",
+                "DAPA_API": "",
+                "JOBS_DATA_SNS_TOPIC_ARN": "",
             }
             cb.build_image(build_args=build_args)
             image_url = cb.push_image()

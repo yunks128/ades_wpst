@@ -1,3 +1,4 @@
+import os
 from flask import Response
 from jinja2 import Template
 import logging
@@ -97,6 +98,12 @@ class ADES_Base:
         proc_summ["jobControlOptions"] = job_control
         proc_summ["processDescriptionURL"] = proc_desc_url
 
+        # add unity-sps workflow step inputs to process inputs
+        req_proc["processDescription"]["process"]["inputs"] += [{"id": "jobs_data_sns_topic_arn"},
+                                                                {"id": "dapa_api"},
+                                                                {"id": "client_id"},
+                                                                {"id": "staging_bucket"}]
+
         try:
             self._ades.deploy_proc(req_proc)
             sqlite_deploy_proc(req_proc)
@@ -162,6 +169,14 @@ class ADES_Base:
 
         # TODO: relying on backend for job id means we need to pass the job publisher to backend impl code for submit notification
         # job notifications should originate from this base layer once 
+        job_params["inputs"] += [{"id": "jobs_data_sns_topic_arn",
+                                  "data": os.getenv("JOB_DATA_SNS_TOPIC_ARN")},
+                                 {"id": "dapa_api",
+                                  "data": os.getenv("DAPA_API")},
+                                 {"id": "client_id",
+                                  "data": os.getenv("CLIENT_ID")},
+                                 {"id": "staging_bucket",
+                                  "data": os.getenv("STAGING_BUCKET")}]
         job_spec = {
             "proc_id": proc_id,
             # "process": self.get_proc(proc_id),
