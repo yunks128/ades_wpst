@@ -168,9 +168,9 @@ class ADES_Base:
         # job_id = f"{proc_id}-{hashlib.sha1((json.dumps(job_inputs, sort_keys=True) + now).encode()).hexdigest()}"
 
         # TODO: relying on backend for job id means we need to pass the job publisher to backend impl code for submit notification
-        # job notifications should originate from this base layer once 
+        # job notifications should originate from this base layer once  
         job_params["inputs"] += [{"id": "jobs_data_sns_topic_arn",
-                                  "data": os.getenv("JOB_DATA_SNS_TOPIC_ARN")},
+                                  "data": os.getenv("JOBS_DATA_SNS_TOPIC_ARN")},
                                  {"id": "dapa_api",
                                   "data": os.getenv("DAPA_API")},
                                  {"id": "client_id",
