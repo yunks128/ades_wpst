@@ -1,4 +1,5 @@
 import os
+import copy
 from flask import Response
 from jinja2 import Template
 import logging
@@ -106,10 +107,11 @@ class ADES_Base:
         proc_summ["processDescriptionURL"] = proc_desc_url
 
         # add unity-sps workflow step inputs to process inputs
-        req_proc["processDescription"]["process"]["inputs"] += [{"id": key} for key in self._job_config_inputs.keys()]
+        backend_req_proc = copy.deepcopy(req_proc)
+        backend_req_proc["processDescription"]["process"]["inputs"] += [{"id": key} for key in self._job_config_inputs.keys()]
 
         try:
-            self._ades.deploy_proc(req_proc)
+            self._ades.deploy_proc(backend_req_proc)
             sqlite_deploy_proc(req_proc)
         except Exception as ex:
             print(
@@ -183,9 +185,16 @@ class ADES_Base:
             "job_publisher": self._job_publisher
         }
         ades_resp = self._ades.exec_job(job_spec)
+
+        # recontstruct inputs without _job_config_inputs before putting in database
+        db_inputs = []
+        for ades_input in ades_resp["inputs"]:
+            # only add inputs from the response that aren't in the _job_config_inputs
+            if not ades_input["name"] in self._job_config_inputs:
+                db_inputs.append(ades_input)
         # ades_resp will return platform specific information that should be
         # kept in the database with the job ID record
-        sqlite_exec_job(proc_id, ades_resp["job_id"], ades_resp["inputs"], ades_resp)
+        sqlite_exec_job(proc_id, ades_resp["job_id"], db_inputs, ades_resp)
         return {"code": 201, "location": "{}/processes/{}/jobs/{}".format(self.host, proc_id, ades_resp["job_id"])}
             
     def dismiss_job(self, proc_id, job_id):
