@@ -41,6 +41,13 @@ class ADES_Base:
             raise ValueError("Platform {} not implemented.".format(self._platform))
         self._ades = ADES_Platform()
         self._job_publisher = SnsJobPublisher(app_config["JOB_NOTIFICATION_TOPIC_ARN"])
+
+        # set of job inputs to append to process deploy requests and job execute requests
+        # { "job_parameter_name": "ENVIRONMENT_VARIABLE_WITH_JOB_PARAMETER_VALUE" }
+        self._job_config_inputs = {"jobs_data_sns_topic_arn": "JOBS_DATA_SNS_TOPIC_ARN",
+                                   "dapa_api": "DAPA_API",
+                                   "client_id": "CLIENT_ID",
+                                   "staging_bucket": "STAGING_BUCKET"}
         
     def proc_dict(self, proc):
         return {
@@ -99,10 +106,7 @@ class ADES_Base:
         proc_summ["processDescriptionURL"] = proc_desc_url
 
         # add unity-sps workflow step inputs to process inputs
-        req_proc["processDescription"]["process"]["inputs"] += [{"id": "jobs_data_sns_topic_arn"},
-                                                                {"id": "dapa_api"},
-                                                                {"id": "client_id"},
-                                                                {"id": "staging_bucket"}]
+        req_proc["processDescription"]["process"]["inputs"] += [{"id": key for key in self._job_config_inputs.keys()}]
 
         try:
             self._ades.deploy_proc(req_proc)
@@ -169,14 +173,9 @@ class ADES_Base:
 
         # TODO: relying on backend for job id means we need to pass the job publisher to backend impl code for submit notification
         # job notifications should originate from this base layer once  
-        job_params["inputs"] += [{"id": "jobs_data_sns_topic_arn",
-                                  "data": os.getenv("JOBS_DATA_SNS_TOPIC_ARN")},
-                                 {"id": "dapa_api",
-                                  "data": os.getenv("DAPA_API")},
-                                 {"id": "client_id",
-                                  "data": os.getenv("CLIENT_ID")},
-                                 {"id": "staging_bucket",
-                                  "data": os.getenv("STAGING_BUCKET")}]
+
+        # add input values from environment variables
+        job_params["inputs"] += [{"id": key, "data": os.getenv(value)} for key, value in self._job_config_inputs.items()]
         job_spec = {
             "proc_id": proc_id,
             # "process": self.get_proc(proc_id),
