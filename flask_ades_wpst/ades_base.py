@@ -106,7 +106,7 @@ class ADES_Base:
         proc_summ["processDescriptionURL"] = proc_desc_url
 
         # add unity-sps workflow step inputs to process inputs
-        req_proc["processDescription"]["process"]["inputs"] += [{"id": key for key in self._job_config_inputs.keys()}]
+        req_proc["processDescription"]["process"]["inputs"] += [{"id": key} for key in self._job_config_inputs.keys()]
 
         try:
             self._ades.deploy_proc(req_proc)
