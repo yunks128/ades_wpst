@@ -1,3 +1,5 @@
+import os
+import copy
 from flask import Response
 from jinja2 import Template
 import logging
@@ -40,6 +42,13 @@ class ADES_Base:
             raise ValueError("Platform {} not implemented.".format(self._platform))
         self._ades = ADES_Platform()
         self._job_publisher = SnsJobPublisher(app_config["JOB_NOTIFICATION_TOPIC_ARN"])
+
+        # set of job inputs to append to process deploy requests and job execute requests
+        # { "job_parameter_name": "ENVIRONMENT_VARIABLE_WITH_JOB_PARAMETER_VALUE" }
+        self._job_config_inputs = {"jobs_data_sns_topic_arn": "JOBS_DATA_SNS_TOPIC_ARN",
+                                   "dapa_api": "DAPA_API",
+                                   "client_id": "CLIENT_ID",
+                                   "staging_bucket": "STAGING_BUCKET"}
         
     def proc_dict(self, proc):
         return {
@@ -97,8 +106,12 @@ class ADES_Base:
         proc_summ["jobControlOptions"] = job_control
         proc_summ["processDescriptionURL"] = proc_desc_url
 
+        # add unity-sps workflow step inputs to process inputs
+        backend_req_proc = copy.deepcopy(req_proc)
+        backend_req_proc["processDescription"]["process"]["inputs"] += [{"id": key} for key in self._job_config_inputs.keys()]
+
         try:
-            self._ades.deploy_proc(req_proc)
+            self._ades.deploy_proc(backend_req_proc)
             sqlite_deploy_proc(req_proc)
         except Exception as ex:
             print(
@@ -161,7 +174,10 @@ class ADES_Base:
         # job_id = f"{proc_id}-{hashlib.sha1((json.dumps(job_inputs, sort_keys=True) + now).encode()).hexdigest()}"
 
         # TODO: relying on backend for job id means we need to pass the job publisher to backend impl code for submit notification
-        # job notifications should originate from this base layer once 
+        # job notifications should originate from this base layer once  
+
+        # add input values from environment variables
+        job_params["inputs"] += [{"id": key, "data": os.getenv(value)} for key, value in self._job_config_inputs.items()]
         job_spec = {
             "proc_id": proc_id,
             # "process": self.get_proc(proc_id),
@@ -169,6 +185,7 @@ class ADES_Base:
             "job_publisher": self._job_publisher
         }
         ades_resp = self._ades.exec_job(job_spec)
+
         # ades_resp will return platform specific information that should be
         # kept in the database with the job ID record
         sqlite_exec_job(proc_id, ades_resp["job_id"], ades_resp["inputs"], ades_resp)
