@@ -118,13 +118,8 @@ class ADES_Base:
         ]
 
         try:
-            print(self.get_proc(proc_id))
-            if self.get_proc(proc_id):
-                print(f"Process ({proc_id}) is already deployed.")
-                raise ValueError(f"Process ({proc_id}) is already deployed.")
-
-            # self._ades.deploy_proc(backend_req_proc)
-            # sqlite_deploy_proc(req_proc)
+            self._ades.deploy_proc(backend_req_proc)
+            sqlite_deploy_proc(req_proc)
         except Exception as ex:
             print(
                 f"Failed to create ADES required files for process deployment. {ex.message}"
