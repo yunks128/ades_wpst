@@ -118,7 +118,7 @@ class ADES_Base:
         ]
 
         try:
-            if self._ades.get_proc(proc_id):
+            if self.get_proc(proc_id):
                 raise ValueError(f"Process ({proc_id}) is already deployed.")
 
             self._ades.deploy_proc(backend_req_proc)
