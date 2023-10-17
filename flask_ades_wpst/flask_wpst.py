@@ -78,7 +78,8 @@ def processes_id(procID):
         if request.method == "GET":
             # Retrieve a process description
             # Get a full description of the algorithm
-            resp_dict = {"process": ades_base.get_proc(procID)}
+            proc_dict = ades_base.get_proc(procID)
+            resp_dict = {"process": proc_dict}
         elif request.method == "DELETE":
             # Undeploy a process
             # Delete the algorithm

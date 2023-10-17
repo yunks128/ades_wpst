@@ -78,7 +78,7 @@ class ADES_Base:
         TODO: sqlite_get_proc vulnerable to sql injeciton through proc_id
         """
         saved_proc = sqlite_get_proc(proc_id)
-        proc_dict = None
+        proc_dict = {}
         if saved_proc:
             proc_dict = self.proc_dict(saved_proc)
         return proc_dict
