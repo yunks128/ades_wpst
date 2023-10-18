@@ -60,12 +60,12 @@ def processes():
         elif request.method == "POST":
             # Deploy a process
             # Register a new algorithm
+            req_vals = request.get_json()
             proc_id = req_vals["processDescription"]["process"]["id"]
             print(ades_base.get_proc(proc_id))
             if ades_base.get_proc(proc_id):
                 print(f"Process ({proc_id}) is already deployed.")
                 raise ValueError(f"Process ({proc_id}) is already deployed.")
-            req_vals = request.get_json()
             proc_info = ades_base.deploy_proc(req_vals)
             resp_dict = {"deploymentResult": {"processSummary": proc_info}}
             status_code = 201
