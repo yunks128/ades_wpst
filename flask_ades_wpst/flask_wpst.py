@@ -48,8 +48,8 @@ def root():
 
 @app.route("/processes", methods=["GET", "POST"])
 def processes():
-    resp_dict = {}
     try:
+        resp_dict = {}
         status_code = 200
         ades_base = ADES_Base(app.config)
         if request.method == "GET":
@@ -61,6 +61,8 @@ def processes():
             # Deploy a process
             # Register a new algorithm
             req_vals = request.get_json()
+            if req_vals is None:
+                raise ValueError("No JSON data provided in the request.")
             proc_id = req_vals["processDescription"]["process"]["id"]
             if ades_base.get_proc(proc_id):
                 raise ValueError(f"Process ({proc_id}) is already deployed.")
@@ -94,23 +96,30 @@ def processes_id(procID):
 
 @app.route("/processes/<procID>/jobs", methods=["GET", "POST"])
 def processes_jobs(procID):
-    ades_base = ADES_Base(app.config)
-    if request.method == "GET":
-        # Retrieve the list of jobs for a process
-        # Get list of jobs for a specific algorithm type
-        status_code = 200
-        job_list = ades_base.get_jobs(procID)
-        resp_dict = {"jobs": job_list}
-        return resp_dict, status_code, {"ContentType": "application/json"}
-    elif request.method == "POST":
-        # Execute a process
-        # Submit a job
-        status_code = 201
-        job_params = request.get_json()
-        job_info = ades_base.exec_job(procID, job_params)
-        header_dict = job_info
-        header_dict["ContentType"] = "application/json"
-        return {}, status_code, header_dict
+    try:
+        resp_dict = {}
+        ades_base = ADES_Base(app.config)
+        if request.method == "GET":
+            # Retrieve the list of jobs for a process
+            # Get list of jobs for a specific algorithm type
+            status_code = 200
+            job_list = ades_base.get_jobs(procID)
+            resp_dict = {"jobs": job_list}
+            return resp_dict, status_code, {"ContentType": "application/json"}
+        elif request.method == "POST":
+            # Execute a process
+            # Submit a job
+            job_params = request.get_json()
+            if job_params is None:
+                raise ValueError("No JSON data provided in the request.")
+            status_code = 201
+            job_info = ades_base.exec_job(procID, job_params)
+            header_dict = job_info
+            header_dict["ContentType"] = "application/json"
+            return {}, status_code, header_dict
+    except:
+        status_code = 500
+    return resp_dict, status_code, {"ContentType": "application/json"}
 
 
 @app.route("/processes/<procID>/jobs/<jobID>", methods=["GET", "DELETE"])
