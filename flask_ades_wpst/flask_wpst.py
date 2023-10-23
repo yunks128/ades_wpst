@@ -62,7 +62,10 @@ def processes():
             # Register a new algorithm
             req_vals = request.get_json()
             if req_vals is None:
-                raise ValueError("No JSON data provided in the request.")
+                if request.data:
+                    raise ValueError("Invalid JSON data provided in the request.")
+                else:
+                    raise ValueError("No data provided in the request.")
             proc_id = req_vals["processDescription"]["process"]["id"]
             if ades_base.get_proc(proc_id):
                 raise ValueError(f"Process ({proc_id}) is already deployed.")
@@ -111,7 +114,10 @@ def processes_jobs(procID):
             # Submit a job
             job_params = request.get_json()
             if job_params is None:
-                raise ValueError("No JSON data provided in the request.")
+                if request.data:
+                    raise ValueError("Invalid JSON data provided in the request.")
+                else:
+                    raise ValueError("No data provided in the request.")
             status_code = 201
             job_info = ades_base.exec_job(procID, job_params)
             header_dict = job_info
